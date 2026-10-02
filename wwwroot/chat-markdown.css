@@ -1,3 +1,18 @@
+.chat-message-divider {
+    animation: chat-divider-appear 420ms ease-out both;
+}
+
+@keyframes chat-divider-appear {
+    from { border-bottom-color: transparent; }
+    to { border-bottom-color: #e4e8ee; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .chat-message-divider {
+        animation: none;
+    }
+}
+
 .chat-markdown > :first-child {
     margin-top: 0;
 }

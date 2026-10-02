@@ -32,7 +32,7 @@
 
             @foreach (var message in Conversation.Messages)
             {
-                <article class="border-b border-[#E4E8EE] py-5 last:border-b-0">
+                <article class="chat-message-divider border-b border-[#E4E8EE] py-5 last:border-b-0">
                     <div class="mb-2 flex items-center gap-2.5">
                         <span class="grid size-7 place-items-center rounded-full text-[10px] font-semibold @(message.IsUser ? "bg-[#EEF0F3] text-[#40536D]" : "bg-[#0B2140] text-[#FF9A2E]")">@(message.IsUser ? "Du" : "N")</span>
                         <span class="text-xs font-semibold @(message.IsUser ? "text-[#62728B]" : "text-[#102344]")">@(message.IsUser ? "Du" : "Northrail Agent")</span>
