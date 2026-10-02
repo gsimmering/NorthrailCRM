@@ -1,14 +1,24 @@
 .chat-message-divider {
+    position: relative;
+}
+
+.chat-message-divider + .chat-message-divider::before {
+    position: absolute;
+    inset: 0 0 auto;
+    height: 1px;
+    background: #e4e8ee;
+    content: "";
+    transform-origin: center;
     animation: chat-divider-appear 420ms ease-out both;
 }
 
 @keyframes chat-divider-appear {
-    from { border-bottom-color: transparent; }
-    to { border-bottom-color: #e4e8ee; }
+    from { opacity: 0; transform: scaleX(0.96); }
+    to { opacity: 1; transform: scaleX(1); }
 }
 
 @media (prefers-reduced-motion: reduce) {
-    .chat-message-divider {
+    .chat-message-divider + .chat-message-divider::before {
         animation: none;
     }
 }
