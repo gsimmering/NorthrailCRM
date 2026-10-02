@@ -1,0 +1,138 @@
+@page "/"
+@page "/crm"
+@rendermode InteractiveServer
+@using NorthrailCRM.Data
+@using NorthrailCRM.Models
+@using NorthrailCRM.Components.Shared
+@using Microsoft.EntityFrameworkCore
+@inject IDbContextFactory<AppDbContext> DbFactory
+
+<PageTitle>Kontakte | Northrail CRM</PageTitle>
+
+@if (isLoading)
+{
+    <div class="grid min-h-screen place-items-center bg-[#0B2140] text-sm text-white/65">Kontakte werden geladen ...</div>
+}
+else
+{
+    <div class="grid min-h-screen bg-[#0B2140] text-white lg:grid-cols-[232px_350px_minmax(0,1fr)]">
+        <WorkspaceSidebar ActivePage="contacts" />
+
+        <section class="min-h-[45vh] border-b border-white/10 bg-[#102849] lg:min-h-screen lg:border-b-0 lg:border-r">
+            <header class="flex items-center justify-between border-b border-white/10 px-6 py-6">
+                <div>
+                    <p class="text-xs font-medium uppercase tracking-[0.16em] text-[#FF9A2E]">CRM / Kontakte</p>
+                    <h1 class="mt-1 text-xl font-semibold tracking-tight text-white">Kontakte <span class="ml-1 text-sm font-normal text-white/45">@contacts.Count</span></h1>
+                </div>
+            </header>
+
+            <div class="border-b border-white/10 p-4">
+                <label class="flex items-center gap-2.5 rounded-lg border border-white/15 bg-[#0B2140] px-3 py-2.5 focus-within:border-[#FF8C1A]">
+                    <svg class="size-4 shrink-0 text-white/45" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m16 16 4 4"/></svg>
+                    <input @bind="searchTerm" @bind:event="oninput" placeholder="Name, Firma oder E-Mail suchen" class="w-full bg-transparent text-sm text-white outline-none placeholder:text-white/40" />
+                    <kbd class="hidden rounded border border-white/20 px-1.5 py-0.5 text-[10px] text-white/45 sm:inline">⌘ K</kbd>
+                </label>
+                <div class="mt-4 flex items-center justify-between text-xs">
+                    <span class="font-medium text-white/70">Alle Kontakte</span>
+                    <span class="text-white/45">@FilteredContacts.Count() Ergebnisse</span>
+                </div>
+            </div>
+
+            <div class="divide-y divide-white/10">
+                @foreach (var contact in FilteredContacts)
+                {
+                    var selected = SelectedContact?.Id == contact.Id;
+                    <button @key="contact.Id" @onclick="() => SelectContact(contact)" class="flex w-full items-start gap-3 px-5 py-4 text-left transition @(selected ? "bg-[#FF8C1A]/15" : "hover:bg-white/5")">
+                        <span class="grid size-10 shrink-0 place-items-center rounded-full bg-white/10 text-xs font-semibold text-[#FFB45C]">@Initials(contact)</span>
+                        <span class="min-w-0 flex-1">
+                            <span class="flex items-center justify-between gap-2">
+                                <span class="truncate text-sm font-medium text-white">@contact.FirstName @contact.LastName</span>
+                                @if (selected)
+                                {
+                                    <span class="size-1.5 shrink-0 rounded-full bg-[#FF8C1A]"></span>
+                                }
+                            </span>
+                            <span class="mt-1 block truncate text-xs text-white/65">@contact.JobTitle</span>
+                            <span class="mt-1 block truncate text-xs text-white/45">@contact.Company</span>
+                        </span>
+                    </button>
+                }
+                @if (!FilteredContacts.Any())
+                {
+                    <p class="px-5 py-10 text-center text-sm text-white/50">Keine Kontakte gefunden.</p>
+                }
+            </div>
+        </section>
+
+        <main class="min-w-0 bg-[#0B2140] p-5 sm:p-8">
+            @if (SelectedContact is not null)
+            {
+                <div class="mx-auto max-w-4xl rounded-[26px] bg-white px-6 py-8 text-[#102344] shadow-xl shadow-black/10 sm:px-10 lg:px-14 lg:py-12">
+                    <div class="flex flex-wrap items-start justify-between gap-5 border-b border-[#E4E8EE] pb-8">
+                        <div class="flex items-center gap-5">
+                            <span class="grid size-16 place-items-center rounded-2xl bg-[#0B2140] text-xl font-semibold text-[#FF9A2E]">@Initials(SelectedContact)</span>
+                            <div>
+                                <p class="text-xs font-medium uppercase tracking-[0.16em] text-[#E98200]">Kontaktprofil</p>
+                                <h2 class="mt-1 text-2xl font-semibold tracking-tight text-[#102344]">@SelectedContact.FirstName @SelectedContact.LastName</h2>
+                                <p class="mt-1 text-sm text-[#62728B]">@SelectedContact.JobTitle bei @SelectedContact.Company</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <section class="py-8">
+                        <h3 class="text-sm font-semibold text-[#102344]">Kontaktinformationen</h3>
+                        <div class="mt-5 grid gap-x-10 gap-y-6 sm:grid-cols-2">
+                            <div><p class="text-xs text-[#738095]">E-Mail-Adresse</p><a class="mt-1.5 block break-all text-sm text-[#E98200] hover:text-[#BE6800]" href="mailto:@SelectedContact.Email">@SelectedContact.Email</a></div>
+                            <div><p class="text-xs text-[#738095]">Telefon</p><a class="mt-1.5 block text-sm text-[#213852] hover:text-[#E98200]" href="tel:@SelectedContact.PhoneNumber">@SelectedContact.PhoneNumber</a></div>
+                            <div><p class="text-xs text-[#738095]">Unternehmen</p><p class="mt-1.5 text-sm text-[#213852]">@SelectedContact.Company</p></div>
+                            <div><p class="text-xs text-[#738095]">Position</p><p class="mt-1.5 text-sm text-[#213852]">@SelectedContact.JobTitle</p></div>
+                        </div>
+                    </section>
+
+                    <section class="border-t border-[#E4E8EE] py-7">
+                        <div class="flex items-center justify-between">
+                            <h3 class="text-sm font-semibold text-[#102344]">Notizen</h3>
+                            <span class="rounded-full bg-[#EEF0F3] px-2.5 py-1 text-xs text-[#58677D]">Intern</span>
+                        </div>
+                        <p class="mt-4 whitespace-pre-wrap text-sm leading-6 text-[#40536D]">@(string.IsNullOrWhiteSpace(SelectedContact.Notes) ? "Noch keine Notizen zu diesem Kontakt." : SelectedContact.Notes)</p>
+                    </section>
+
+                    <section class="border-t border-[#E4E8EE] py-7">
+                        <h3 class="text-sm font-semibold text-[#102344]">Letzte Aktivität</h3>
+                        <div class="mt-5 flex gap-3">
+                            <span class="mt-1.5 size-2 shrink-0 rounded-full bg-[#FF8C1A] ring-4 ring-[#FF8C1A]/15"></span>
+                            <div><p class="text-sm text-[#213852]">Kontakt zum CRM hinzugefügt</p><p class="mt-1 text-xs text-[#738095]">Northrail Workspace</p></div>
+                        </div>
+                    </section>
+                </div>
+            }
+        </main>
+    </div>
+}
+
+@code {
+    private List<Contact> contacts = [];
+    private Contact? SelectedContact;
+    private string searchTerm = string.Empty;
+    private bool isLoading = true;
+
+    private IEnumerable<Contact> FilteredContacts => contacts.Where(contact =>
+        $"{contact.FirstName} {contact.LastName} {contact.Email} {contact.Company} {contact.JobTitle}"
+            .Contains(searchTerm, StringComparison.OrdinalIgnoreCase));
+
+    protected override async Task OnInitializedAsync()
+    {
+        await using var db = await DbFactory.CreateDbContextAsync();
+        contacts = await db.Contacts.AsNoTracking()
+            .OrderBy(contact => contact.LastName)
+            .ThenBy(contact => contact.FirstName)
+            .ToListAsync();
+        SelectedContact = contacts.FirstOrDefault();
+        isLoading = false;
+    }
+
+    private void SelectContact(Contact contact) => SelectedContact = contact;
+
+    private static string Initials(Contact contact) =>
+        $"{contact.FirstName.FirstOrDefault()}{contact.LastName.FirstOrDefault()}".ToUpperInvariant();
+}

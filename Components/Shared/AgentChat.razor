@@ -1,0 +1,282 @@
+@using System.Diagnostics
+@using System.Text
+@using NorthrailCRM.Services
+@inject FoundryAgentChatService ChatService
+@inject ChatWorkspaceState ChatState
+@inject ILogger<AgentChat> Logger
+@inject IJSRuntime JS
+@implements IAsyncDisposable
+
+<section aria-label="Northrail Agent-Chat" class="mx-auto flex h-[calc(100dvh-23rem)] min-h-[300px] w-full flex-col overflow-hidden rounded-[22px] border border-[#E4E8EE] bg-white text-[#102344] shadow-xl shadow-black/10 md:h-[calc(100dvh-14rem)] md:min-h-[420px] lg:h-[calc(100dvh-4rem)] lg:min-h-[500px]">
+    <header class="flex items-center justify-between gap-4 border-b border-[#E4E8EE] px-5 py-4">
+        <div class="min-w-0">
+            <h2 class="truncate text-base font-semibold text-[#102344]">@Conversation.Title</h2>
+            <p class="mt-0.5 flex items-center gap-1.5 text-xs @(ChatService.IsConfigured ? "text-emerald-700" : "text-[#BE6800]")">
+                <span class="size-1.5 rounded-full @(ChatService.IsConfigured ? "bg-emerald-400" : "bg-[#FF8C1A]")"></span>
+                @(ChatService.IsConfigured ? "Verbunden" : "Konfiguration fehlt")
+            </p>
+        </div>
+        <span class="grid size-10 shrink-0 place-items-center rounded-full bg-[#FF8C1A] text-[#0B2140]">
+            <svg class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M12 3v3m0 12v3M3 12h3m12 0h3M5.64 5.64l2.12 2.12m8.48 8.48 2.12 2.12m0-12.72-2.12 2.12m-8.48 8.48-2.12 2.12"/><circle cx="12" cy="12" r="4"/></svg>
+        </span>
+    </header>
+
+        <div @ref="messagesContainer" class="min-h-0 flex-1 overflow-y-auto px-5 py-3" aria-live="polite" aria-relevant="additions text">
+            @if (!ChatService.IsConfigured)
+            {
+                <div class="my-4 rounded-xl border border-[#FF8C1A]/30 bg-[#FFF5E8] p-4 text-sm leading-6 text-[#40536D]">
+                    <p class="font-semibold text-[#BE6800]">Agent noch nicht verbunden</p>
+                    <p class="mt-1">Setze `Foundry:ProjectEndpoint` und `Foundry:AgentName` als Umgebungsvariablen `Foundry__ProjectEndpoint` und `Foundry__AgentName`. Lokal vorher mit `az login` anmelden.</p>
+                </div>
+            }
+
+            @foreach (var message in Conversation.Messages)
+            {
+                <article class="border-b border-[#E4E8EE] py-5 last:border-b-0">
+                    <div class="mb-2 flex items-center gap-2.5">
+                        <span class="grid size-7 place-items-center rounded-full text-[10px] font-semibold @(message.IsUser ? "bg-[#EEF0F3] text-[#40536D]" : "bg-[#0B2140] text-[#FF9A2E]")">@(message.IsUser ? "Du" : "N")</span>
+                        <span class="text-xs font-semibold @(message.IsUser ? "text-[#62728B]" : "text-[#102344]")">@(message.IsUser ? "Du" : "Northrail Agent")</span>
+                    </div>
+                    @if (message.IsUser)
+                    {
+                        <p class="whitespace-pre-wrap break-words pl-9 text-sm leading-6 text-[#213852]">@message.Text</p>
+                    }
+                    else
+                    {
+                        <ChatMarkdown Markdown="@message.Text" Attachments="message.Attachments" />
+                    }
+                </article>
+            }
+
+            @if (Conversation.IsSending)
+            {
+                <div class="flex items-center gap-2 py-4 pl-9 text-sm text-[#738095]">
+                    <span class="size-1.5 animate-pulse rounded-full bg-[#FF8C1A]"></span>
+                    Agent antwortet …
+                </div>
+            }
+        </div>
+
+        <form @onsubmit="SendAsync" @onsubmit:preventDefault="true" class="border-t border-[#E4E8EE] p-4">
+            <div class="flex items-end gap-2 rounded-2xl border border-[#D9DFE7] bg-[#F7F8FA] p-2 focus-within:border-[#FF8C1A]">
+                <textarea @ref="messageInput" @bind="draft" @bind:event="oninput" @bind:after="WarmFoundryConversationAsync" rows="2" maxlength="4000" disabled="@(!ChatService.IsConfigured || Conversation.IsSending)" placeholder="Nachricht an den Agenten …" class="max-h-32 min-h-12 flex-1 resize-none bg-transparent px-2 py-1.5 text-sm leading-5 text-[#102344] outline-none placeholder:text-[#8793A4] disabled:cursor-not-allowed disabled:opacity-50"></textarea>
+                <button type="submit" disabled="@(!CanSend)" aria-label="Nachricht senden" title="Senden" class="grid size-10 shrink-0 place-items-center rounded-xl bg-[#FF8C1A] text-[#0B2140] transition-colors hover:bg-[#FF9A2E] disabled:cursor-not-allowed disabled:opacity-40 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#FF8C1A]">
+                    <svg class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="m21 3-7.2 18-3.4-7.4L3 10.2 21 3Z"/><path d="M10.4 13.6 15 9"/></svg>
+                </button>
+            </div>
+            @if (!string.IsNullOrWhiteSpace(errorMessage))
+            {
+                <p role="alert" class="mt-2 px-1 text-xs text-rose-300">@errorMessage</p>
+            }
+        </form>
+</section>
+
+@code {
+    [Parameter, EditorRequired]
+    public AgentChatConversation Conversation { get; set; } = default!;
+
+    private string draft = string.Empty;
+    private string? errorMessage;
+    private CancellationTokenSource? activeRequest;
+    private ElementReference messageInput;
+    private ElementReference messagesContainer;
+    private DotNetObjectReference<AgentChat>? dotNetReference;
+
+    private bool CanSend => ChatService.IsConfigured && !Conversation.IsSending && !string.IsNullOrWhiteSpace(draft);
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            dotNetReference = DotNetObjectReference.Create(this);
+            await JS.InvokeVoidAsync("northrailChat.attachEnterToSend", messageInput, dotNetReference);
+        }
+
+        await JS.InvokeVoidAsync("northrailChat.scrollToBottom", messagesContainer);
+    }
+
+    [JSInvokable]
+    public Task SendFromKeyboardAsync() => SendAsync();
+
+    private async Task SendAsync()
+    {
+        if (!CanSend)
+        {
+            return;
+        }
+
+        var prompt = draft.Trim();
+        draft = string.Empty;
+        errorMessage = null;
+        var conversation = Conversation;
+        var request = new CancellationTokenSource();
+        activeRequest = request;
+        conversation.Messages.Add(new AgentChatMessage(prompt, true));
+        if (conversation.Title == "Neuer Chat")
+        {
+            conversation.Title = prompt.Length > 42 ? $"{prompt[..42]}…" : prompt;
+        }
+
+        conversation.IsSending = true;
+        ChatState.NotifyConversationChanged(conversation);
+        await InvokeAsync(StateHasChanged);
+
+        try
+        {
+            conversation.FoundryConversationId ??= await GetFoundryConversationIdAsync(conversation, request.Token);
+            AgentChatMessage? assistantMessage = null;
+            var pendingText = new StringBuilder();
+            var lastPublishedAt = Stopwatch.GetTimestamp();
+            await foreach (var streamUpdate in ChatService.StreamMessageAsync(
+                conversation.FoundryConversationId,
+                prompt,
+                request.Token))
+            {
+                if (string.IsNullOrEmpty(streamUpdate.TextDelta) && streamUpdate.Attachment is null)
+                {
+                    continue;
+                }
+
+                if (!string.IsNullOrEmpty(streamUpdate.TextDelta))
+                {
+                    pendingText.Append(streamUpdate.TextDelta);
+                }
+
+                var hasAttachment = streamUpdate.Attachment is not null;
+                var shouldPublish = pendingText.Length >= 32
+                    || Stopwatch.GetElapsedTime(lastPublishedAt) >= TimeSpan.FromMilliseconds(80)
+                    || hasAttachment;
+
+                if (!shouldPublish)
+                {
+                    continue;
+                }
+
+                assistantMessage ??= new AgentChatMessage(string.Empty, false);
+                if (!conversation.Messages.Contains(assistantMessage))
+                {
+                    conversation.Messages.Add(assistantMessage);
+                }
+
+                if (pendingText.Length > 0)
+                {
+                    assistantMessage.Text += pendingText.ToString();
+                    pendingText.Clear();
+                }
+
+                if (streamUpdate.Attachment is { } attachment)
+                {
+                    assistantMessage.Attachments.Add(attachment);
+                }
+
+                ChatState.NotifyConversationChanged(conversation);
+                await InvokeAsync(StateHasChanged);
+                lastPublishedAt = Stopwatch.GetTimestamp();
+            }
+
+            if (pendingText.Length > 0)
+            {
+                assistantMessage ??= new AgentChatMessage(string.Empty, false);
+                if (!conversation.Messages.Contains(assistantMessage))
+                {
+                    conversation.Messages.Add(assistantMessage);
+                }
+
+                assistantMessage.Text += pendingText.ToString();
+                ChatState.NotifyConversationChanged(conversation);
+                await InvokeAsync(StateHasChanged);
+            }
+
+            if (assistantMessage is null)
+            {
+                conversation.Messages.Add(new AgentChatMessage("Der Agent hat keine Textantwort zurückgegeben.", false));
+            }
+        }
+        catch (OperationCanceledException) when (request.IsCancellationRequested)
+        {
+        }
+        catch (Exception exception)
+        {
+            Logger.LogError(exception, "Foundry Agent request failed.");
+            errorMessage = "Die Verbindung zum Agenten ist fehlgeschlagen. Prüfe Foundry-Konfiguration und Azure-Berechtigungen.";
+        }
+        finally
+        {
+            conversation.IsSending = false;
+            ChatState.NotifyConversationChanged(conversation);
+            if (ReferenceEquals(activeRequest, request))
+            {
+                activeRequest = null;
+            }
+
+            request.Dispose();
+        }
+    }
+
+    private Task WarmFoundryConversationAsync()
+    {
+        if (draft.Length >= 8
+            && Conversation.FoundryConversationId is null
+            && Conversation.PendingFoundryConversationCreation is null)
+        {
+            Conversation.PendingFoundryConversationCreation = WarmFoundryConversationCoreAsync();
+        }
+
+        return Task.CompletedTask;
+    }
+
+    private async Task<string> WarmFoundryConversationCoreAsync()
+    {
+        try
+        {
+            return await ChatService.CreateConversationAsync();
+        }
+        catch (Exception exception)
+        {
+            Logger.LogDebug(exception, "Foundry conversation warmup failed; creation will retry when the message is sent.");
+            return string.Empty;
+        }
+    }
+
+    private async Task<string> GetFoundryConversationIdAsync(
+        AgentChatConversation conversation,
+        CancellationToken cancellationToken)
+    {
+        if (conversation.FoundryConversationId is { Length: > 0 } existingId)
+        {
+            return existingId;
+        }
+
+        if (conversation.PendingFoundryConversationCreation is { } pendingCreation)
+        {
+            conversation.PendingFoundryConversationCreation = null;
+            var warmedId = await pendingCreation;
+            if (!string.IsNullOrWhiteSpace(warmedId))
+            {
+                return warmedId;
+            }
+        }
+
+        return await ChatService.CreateConversationAsync(cancellationToken);
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        activeRequest?.Cancel();
+
+        if (dotNetReference is null)
+        {
+            return;
+        }
+
+        try
+        {
+            await JS.InvokeVoidAsync("northrailChat.detachEnterToSend", messageInput);
+        }
+        catch (JSDisconnectedException)
+        {
+        }
+
+        dotNetReference.Dispose();
+    }
+}

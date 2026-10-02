@@ -1,0 +1,76 @@
+@implements IDisposable
+@using NorthrailCRM.Services
+@inject ChatWorkspaceState ChatState
+
+<div class="grid min-h-screen bg-[#0B2140] text-white lg:grid-cols-[232px_290px_minmax(0,1fr)]">
+    <WorkspaceSidebar ActivePage="chat" />
+
+    <aside class="flex max-h-[250px] min-h-[190px] flex-col border-b border-white/10 bg-[#102849] lg:max-h-none lg:min-h-screen lg:border-b-0 lg:border-r">
+        <header class="flex items-center justify-between border-b border-white/10 px-5 py-5">
+            <div>
+                <p class="text-xs font-medium uppercase tracking-[0.16em] text-[#FF9A2E]">CRM / Agent</p>
+                <h2 class="mt-1 text-xl font-semibold tracking-tight text-white">Agent-Chat <span class="ml-1 text-sm font-normal text-white/45">@ChatState.Conversations.Count</span></h2>
+            </div>
+            <button @onclick="StartNewChat" type="button" aria-label="Neuen Chat starten" title="Neuer Chat" class="grid size-9 place-items-center rounded-full bg-[#FF8C1A] text-xl leading-none text-[#0B2140] transition-colors duration-150 hover:bg-[#FF9A2E] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#FF8C1A] motion-reduce:transition-none">+</button>
+        </header>
+
+        <div class="border-b border-white/10 p-4">
+            <label class="flex items-center gap-2.5 rounded-lg border border-white/15 bg-[#0B2140] px-3 py-2.5 focus-within:border-[#FF8C1A]">
+                <svg class="size-4 shrink-0 text-white/45" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m16 16 4 4"/></svg>
+                <input @bind="searchTerm" @bind:event="oninput" placeholder="Chats suchen" class="w-full bg-transparent text-sm text-white outline-none placeholder:text-white/40" />
+            </label>
+            <div class="mt-4 flex items-center justify-between text-xs">
+                <span class="font-medium text-white/70">Alle Chats</span>
+                <span class="text-white/45">@FilteredConversations.Count() Ergebnisse</span>
+            </div>
+        </div>
+
+        <nav aria-label="Chat-Historie" class="min-h-0 flex-1 divide-y divide-white/10 overflow-y-auto">
+            @foreach (var conversation in FilteredConversations)
+            {
+                var isSelected = conversation.Id == ChatState.ActiveConversationId;
+                <button @key="conversation.Id" @onclick="() => ChatState.SelectConversation(conversation.Id)" aria-current="@(isSelected ? "page" : null)" class="flex w-full items-start gap-3 px-5 py-4 text-left transition-colors duration-150 @(isSelected ? "bg-[#FF8C1A]/15" : "hover:bg-white/5")">
+                    <span class="grid size-10 shrink-0 place-items-center rounded-full bg-white/10 text-[#FFB45C]">
+                        <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M20 11.5a7.5 7.5 0 0 1-7.5 7.5 8 8 0 0 1-3.6-.85L4 20l1.55-4.1A7.5 7.5 0 1 1 20 11.5Z" /></svg>
+                    </span>
+                    <span class="min-w-0 flex-1">
+                        <span class="block truncate text-sm font-medium text-white">@conversation.Title</span>
+                        <span class="mt-1 block truncate text-xs text-white/55">@conversation.Preview</span>
+                        <span class="mt-1 block text-[10px] text-white/35">@conversation.UpdatedAt.ToLocalTime().ToString("dd.MM. HH:mm")</span>
+                    </span>
+                </button>
+            }
+            @if (!FilteredConversations.Any())
+            {
+                <p class="px-5 py-10 text-center text-sm text-white/50">Keine Chats gefunden.</p>
+            }
+        </nav>
+    </aside>
+
+    <main class="min-w-0 bg-[#102849] p-4 sm:p-6 lg:p-8">
+        @if (ChatState.ActiveConversation is { } activeConversation)
+        {
+            <AgentChat @key="activeConversation.Id" Conversation="activeConversation" />
+        }
+    </main>
+</div>
+
+@code {
+    private string searchTerm = string.Empty;
+
+    private IEnumerable<AgentChatConversation> FilteredConversations => ChatState.Conversations.Where(conversation =>
+        $"{conversation.Title} {conversation.Preview}"
+            .Contains(searchTerm, StringComparison.OrdinalIgnoreCase));
+
+    protected override void OnInitialized()
+    {
+        ChatState.EnsureConversation();
+        ChatState.Changed += HandleChatStateChanged;
+    }
+
+    private void StartNewChat() => ChatState.StartNewConversation();
+
+    private void HandleChatStateChanged() => _ = InvokeAsync(StateHasChanged);
+
+    public void Dispose() => ChatState.Changed -= HandleChatStateChanged;
+}

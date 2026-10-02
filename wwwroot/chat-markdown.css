@@ -1,0 +1,112 @@
+.chat-markdown > :first-child {
+    margin-top: 0;
+}
+
+.chat-markdown > :last-child {
+    margin-bottom: 0;
+}
+
+.chat-markdown p,
+.chat-markdown ul,
+.chat-markdown ol,
+.chat-markdown blockquote,
+.chat-markdown table,
+.chat-markdown pre {
+    margin-block: 0.75rem;
+}
+
+.chat-markdown h1,
+.chat-markdown h2,
+.chat-markdown h3,
+.chat-markdown h4,
+.chat-markdown h5,
+.chat-markdown h6 {
+    margin-block: 1.25rem 0.5rem;
+    color: #102344;
+    font-weight: 700;
+    line-height: 1.35;
+}
+
+.chat-markdown h1 { font-size: 1.25rem; }
+.chat-markdown h2 { font-size: 1.125rem; }
+.chat-markdown h3,
+.chat-markdown h4,
+.chat-markdown h5,
+.chat-markdown h6 { font-size: 1rem; }
+
+.chat-markdown ul,
+.chat-markdown ol {
+    padding-left: 1.5rem;
+}
+
+.chat-markdown ul { list-style: disc; }
+.chat-markdown ol { list-style: decimal; }
+.chat-markdown li + li { margin-top: 0.25rem; }
+
+.chat-markdown a {
+    color: #be6800;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+    overflow-wrap: anywhere;
+}
+
+.chat-markdown blockquote {
+    border-left: 3px solid #ff8c1a;
+    background: #fff5e8;
+    padding: 0.65rem 0.9rem;
+    color: #40536d;
+}
+
+.chat-markdown code {
+    border-radius: 4px;
+    background: #eef0f3;
+    padding: 0.1rem 0.35rem;
+    font-family: Consolas, "Courier New", monospace;
+    font-size: 0.9em;
+    overflow-wrap: anywhere;
+}
+
+.chat-markdown pre {
+    max-width: 100%;
+    overflow-x: auto;
+    border-radius: 8px;
+    background: #0b2140;
+    padding: 0.9rem 1rem;
+    color: #f8fafc;
+}
+
+.chat-markdown pre code {
+    background: transparent;
+    padding: 0;
+    color: inherit;
+    overflow-wrap: normal;
+}
+
+.chat-markdown table {
+    display: block;
+    width: max-content;
+    min-width: 100%;
+    max-width: 100%;
+    overflow-x: auto;
+    border-collapse: collapse;
+    font-size: 0.875rem;
+}
+
+.chat-markdown th,
+.chat-markdown td {
+    border: 1px solid #d9dfe7;
+    padding: 0.5rem 0.75rem;
+    text-align: left;
+}
+
+.chat-markdown th {
+    background: #f7f8fa;
+    color: #102344;
+    font-weight: 600;
+}
+
+.chat-markdown hr {
+    margin-block: 1rem;
+    border: 0;
+    border-top: 1px solid #e4e8ee;
+}

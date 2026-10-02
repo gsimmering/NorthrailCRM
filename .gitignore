@@ -1,0 +1,12 @@
+.vs/
+**/bin/
+**/obj/
+TestResults/
+*.user
+*.suo
+*.cache
+*.log
+.env
+.env.*
+appsettings.Local.json
+secrets.json
