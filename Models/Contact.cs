@@ -1,29 +1,48 @@
-using System.ComponentModel.DataAnnotations;
-
 namespace NorthrailCRM.Models;
 
-public class Contact
+public sealed class Contact
 {
-    public int Id { get; set; }
+    public string Key { get; init; } = string.Empty;
+    public int Number { get; init; }
+    public string Email { get; init; } = string.Empty;
+    public string PhoneNumber { get; init; } = string.Empty;
+    public string Company { get; init; } = string.Empty;
+    public string Notes { get; init; } = string.Empty;
+    public string Street { get; init; } = string.Empty;
+    public string PostalCode { get; init; } = string.Empty;
+    public string City { get; init; } = string.Empty;
+    public string Country { get; init; } = string.Empty;
+    public bool IsCustomer { get; init; }
+    public bool IsSupplier { get; init; }
+    public List<Person> Persons { get; } = [];
 
-    [Required, MaxLength(100)]
-    public string FirstName { get; set; } = string.Empty;
+    public string DisplayName => string.IsNullOrWhiteSpace(Company) ? $"Kontakt {Number}" : Company;
 
-    [Required, MaxLength(100)]
-    public string LastName { get; set; } = string.Empty;
+    public string Subtitle => string.Join(" · ", new[]
+    {
+        Persons.Count == 1 ? "1 Person" : $"{Persons.Count} Personen",
+        IsCustomer ? "Kunde" : null,
+        IsSupplier ? "Lieferant" : null
+    }.Where(part => !string.IsNullOrWhiteSpace(part)));
 
-    [Required, EmailAddress, MaxLength(256)]
-    public string Email { get; set; } = string.Empty;
+    public string Address => string.Join(", ", new[]
+    {
+        Street,
+        $"{PostalCode} {City}".Trim(),
+        Country
+    }.Where(part => !string.IsNullOrWhiteSpace(part)));
+}
 
-    [MaxLength(40)]
-    public string PhoneNumber { get; set; } = string.Empty;
+public sealed class Person
+{
+    public int Number { get; init; }
+    public string Title { get; init; } = string.Empty;
+    public string FirstName { get; init; } = string.Empty;
+    public string LastName { get; init; } = string.Empty;
+    public string JobTitle { get; init; } = string.Empty;
+    public string Email { get; init; } = string.Empty;
+    public string PhoneNumber { get; init; } = string.Empty;
 
-    [MaxLength(150)]
-    public string Company { get; set; } = string.Empty;
-
-    [MaxLength(150)]
-    public string JobTitle { get; set; } = string.Empty;
-
-    [MaxLength(2000)]
-    public string Notes { get; set; } = string.Empty;
+    public string DisplayName => string.Join(" ", new[] { Title, FirstName, LastName }
+        .Where(part => !string.IsNullOrWhiteSpace(part)));
 }

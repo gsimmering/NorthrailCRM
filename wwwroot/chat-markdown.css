@@ -1,25 +1,45 @@
+.crm-contact-list,
+.crm-contact-card {
+    scrollbar-width: none;
+}
+
+.crm-contact-list::-webkit-scrollbar,
+.crm-contact-card::-webkit-scrollbar {
+    display: none;
+}
+
 .chat-message-divider {
     position: relative;
 }
 
-.chat-message-divider + .chat-message-divider::before {
-    position: absolute;
-    inset: 0 0 auto;
-    height: 1px;
-    background: #e4e8ee;
-    content: "";
-    transform-origin: center;
-    animation: chat-divider-appear 420ms ease-out both;
+.chat-message-divider + .chat-message-divider {
+    border-top: 1px solid #e4e8ee;
 }
 
-@keyframes chat-divider-appear {
-    from { opacity: 0; transform: scaleX(0.96); }
-    to { opacity: 1; transform: scaleX(1); }
+.chat-response-pending {
+    position: relative;
+    border-top: 1px solid #e4e8ee;
+}
+
+.chat-response-pending::before {
+    position: absolute;
+    inset: -1px 0 auto;
+    height: 2px;
+    background: linear-gradient(90deg, transparent 0%, #e4e8ee 36%, #ff8c1a 50%, #e4e8ee 64%, transparent 100%);
+    background-size: 200% 100%;
+    content: "";
+    animation: chat-divider-sweep 1.1s linear infinite;
+}
+
+@keyframes chat-divider-sweep {
+    from { background-position: 100% 0; }
+    to { background-position: -100% 0; }
 }
 
 @media (prefers-reduced-motion: reduce) {
-    .chat-message-divider + .chat-message-divider::before {
+    .chat-response-pending::before {
         animation: none;
+        background: transparent;
     }
 }
 

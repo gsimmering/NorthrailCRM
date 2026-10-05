@@ -1,40 +1,19 @@
 using NorthrailCRM.Components;
-using NorthrailCRM.Data;
-using NorthrailCRM.Models;
 using NorthrailCRM.Services;
-using Microsoft.EntityFrameworkCore;
+using System.Text.Json;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
-builder.Services.AddDbContextFactory<AppDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+builder.Services.AddScoped<ContactService>();
 builder.Services.AddScoped<FoundryAgentChatService>();
 builder.Services.AddScoped<ChatWorkspaceState>();
 builder.Services.AddSingleton<ChatMarkdownRenderer>();
 builder.Services.AddSingleton<FoundryFileDownloadStore>();
 
 var app = builder.Build();
-
-await using (var scope = app.Services.CreateAsyncScope())
-{
-    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-    await db.Database.MigrateAsync();
-
-    if (!await db.Contacts.AnyAsync())
-    {
-        db.Contacts.AddRange(
-            new Contact { FirstName = "Maya", LastName = "Weber", Email = "maya.weber@northstar.example", PhoneNumber = "+49 30 555 01 21", Company = "Northstar Studio", JobTitle = "Geschäftsführerin", Notes = "Interessiert an einer langfristigen Partnerschaft. Folgetermin für nächste Woche vormerken." },
-            new Contact { FirstName = "Jonas", LastName = "Fischer", Email = "jonas.fischer@orbit.example", PhoneNumber = "+49 89 555 02 34", Company = "Orbit Systems", JobTitle = "Leiter Vertrieb", Notes = "Hat die Produktdemo gesehen und möchte ein Angebot für sein Team." },
-            new Contact { FirstName = "Leonie", LastName = "Schmidt", Email = "leonie.schmidt@formwerk.example", PhoneNumber = "+49 40 555 03 45", Company = "Formwerk GmbH", JobTitle = "Produktdesignerin", Notes = "Bevorzugt Kontakt per E-Mail. Budgetfreigabe steht noch aus." },
-            new Contact { FirstName = "David", LastName = "Keller", Email = "david.keller@klarwerk.example", PhoneNumber = "+49 221 555 04 56", Company = "Klarwerk Digital", JobTitle = "Technischer Einkäufer", Notes = "Technische Anforderungen zugesendet; Rückmeldung nach interner Prüfung." },
-            new Contact { FirstName = "Amira", LastName = "Yilmaz", Email = "amira.yilmaz@gruenpunkt.example", PhoneNumber = "+49 711 555 05 67", Company = "Grünpunkt Energie", JobTitle = "Partnerships Managerin", Notes = "Mögliche Kooperation für das kommende Quartal besprochen." });
-
-        await db.SaveChangesAsync();
-    }
-}
 
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
@@ -48,6 +27,55 @@ app.UseHttpsRedirection();
 
 
 app.UseAntiforgery();
+
+app.MapGet("/api/current-user", (HttpContext context) =>
+{
+    string? displayName = null;
+    var encodedPrincipal = context.Request.Headers["X-MS-CLIENT-PRINCIPAL"].FirstOrDefault();
+
+    if (!string.IsNullOrWhiteSpace(encodedPrincipal))
+    {
+        try
+        {
+            using var principal = JsonDocument.Parse(Convert.FromBase64String(encodedPrincipal));
+            if (principal.RootElement.TryGetProperty("claims", out var claims)
+                && claims.ValueKind == JsonValueKind.Array)
+            {
+                string[] nameClaimTypes =
+                [
+                    "name",
+                    "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name",
+                    "preferred_username",
+                    "upn",
+                    "email"
+                ];
+
+                foreach (var claimType in nameClaimTypes)
+                {
+                    displayName = claims.EnumerateArray()
+                        .Where(claim => claim.TryGetProperty("typ", out var type)
+                            && type.GetString() == claimType)
+                        .Select(claim => claim.TryGetProperty("val", out var value) ? value.GetString() : null)
+                        .FirstOrDefault(value => !string.IsNullOrWhiteSpace(value));
+
+                    if (displayName is not null)
+                    {
+                        break;
+                    }
+                }
+            }
+        }
+        catch (FormatException)
+        {
+        }
+        catch (JsonException)
+        {
+        }
+    }
+
+    displayName ??= context.Request.Headers["X-MS-CLIENT-PRINCIPAL-NAME"].FirstOrDefault();
+    return Results.Ok(new { name = displayName });
+});
 
 app.MapGet("/api/agent-files/{token}", async (
     string token,

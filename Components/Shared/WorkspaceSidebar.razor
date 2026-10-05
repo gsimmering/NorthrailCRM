@@ -1,3 +1,6 @@
+@using Microsoft.JSInterop
+@inject IJSRuntime JS
+
 <aside class="border-b border-white/10 bg-[#0B2140] px-4 py-4 lg:flex lg:flex-col lg:border-b-0 lg:border-r lg:px-5 lg:py-7">
     <a href="/" class="mb-4 flex items-center gap-3 text-lg font-semibold tracking-wide text-white lg:mb-12">
         <img src="/images/northrail-logo.svg" alt="Northrail" class="h-5 w-auto" />
@@ -15,16 +18,46 @@
         <span class="hidden items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-white/40 lg:flex"><span aria-hidden="true">◷</span> Aktivitäten</span>
     </nav>
     <div class="mt-auto hidden items-center gap-3 border-t border-white/10 pt-5 lg:flex">
-        <span class="grid size-9 place-items-center rounded-full bg-white/10 text-xs font-semibold text-white/80">NW</span>
+        <span class="grid size-9 place-items-center rounded-full bg-white/10 text-xs font-semibold text-white/80">@UserInitials</span>
         <div class="min-w-0">
-            <p class="truncate text-sm font-medium text-white/90">Nora Wagner</p>
-            <p class="text-xs text-white/45">Administratorin</p>
+            <p class="truncate text-sm font-medium text-white/90">@userName</p>
+            <p class="text-xs text-white/45">@(isAuthenticated ? "Microsoft Entra ID" : "Lokale Vorschau")</p>
         </div>
         <span class="ml-auto text-white/50" aria-hidden="true">···</span>
     </div>
 </aside>
 
 @code {
+    private string userName = "Lokaler Benutzer";
+    private bool isAuthenticated;
+
+    private string UserInitials => string.Concat(
+        userName.Split(' ', StringSplitOptions.RemoveEmptyEntries)
+            .Take(2)
+            .Select(part => char.ToUpperInvariant(part[0])));
+
     [Parameter]
     public string ActivePage { get; set; } = "contacts";
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender)
+        {
+            return;
+        }
+
+        try
+        {
+            var name = await JS.InvokeAsync<string?>("northrailChat.getCurrentUserName");
+            if (!string.IsNullOrWhiteSpace(name))
+            {
+                userName = name.Trim();
+                isAuthenticated = true;
+                await InvokeAsync(StateHasChanged);
+            }
+        }
+        catch (JSException)
+        {
+        }
+    }
 }
