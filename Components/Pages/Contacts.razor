@@ -6,17 +6,77 @@
 @using NorthrailCRM.Components.Shared
 @using Microsoft.JSInterop
 @inject ContactService ContactService
+@inject SharePointDocumentService SharePointDocumentService
 @inject IJSRuntime JS
 
 <PageTitle>Kontakte | Northrail CRM</PageTitle>
 
 @if (isLoading)
 {
-    <div class="grid min-h-screen place-items-center bg-[#0B2140] text-sm text-white/65">Kontakte werden geladen ...</div>
+    <div aria-busy="true" class="contacts-loading-layout grid min-h-screen bg-[#0B2140] text-white lg:h-screen lg:min-h-0 lg:overflow-hidden lg:grid-cols-[232px_350px_minmax(0,1fr)]">
+        <aside aria-hidden="true" class="hidden flex-col border-r border-white/10 bg-[#0B2140] px-5 py-7 lg:flex">
+            <div class="contacts-loading-sheen mb-12 h-5 w-36 rounded"></div>
+            <div class="contacts-loading-sheen mb-5 h-3 w-20 rounded"></div>
+            <div class="space-y-3">
+                <div class="contacts-loading-sheen h-10 rounded-full"></div>
+                <div class="contacts-loading-sheen h-10 rounded-full opacity-60"></div>
+            </div>
+            <div class="mt-auto flex items-center gap-3 border-t border-white/10 pt-5">
+                <div class="contacts-loading-sheen size-9 rounded-full"></div>
+                <div class="flex-1 space-y-2"><div class="contacts-loading-sheen h-3 w-28 rounded"></div><div class="contacts-loading-sheen h-2.5 w-20 rounded opacity-60"></div></div>
+            </div>
+        </aside>
+
+        <section aria-hidden="true" class="max-h-[55vh] min-h-[45vh] overflow-hidden border-b border-white/10 bg-[#102849] lg:h-screen lg:min-h-0 lg:max-h-screen lg:border-b-0 lg:border-r">
+            <header class="border-b border-white/10 px-6 py-6">
+                <div class="contacts-loading-sheen h-3 w-28 rounded"></div>
+                <div class="contacts-loading-sheen mt-3 h-6 w-40 rounded"></div>
+            </header>
+            <div class="border-b border-white/10 p-4">
+                <div class="contacts-loading-sheen h-10 rounded-lg"></div>
+                <div class="mt-5 flex justify-between"><div class="contacts-loading-sheen h-3 w-20 rounded"></div><div class="contacts-loading-sheen h-3 w-16 rounded"></div></div>
+            </div>
+            <div class="divide-y divide-white/10">
+                @for (var row = 0; row < 8; row++)
+                {
+                    <div class="flex items-start gap-3 px-5 py-4">
+                        <div class="contacts-loading-sheen size-10 shrink-0 rounded-full"></div>
+                        <div class="min-w-0 flex-1 space-y-2.5 pt-1"><div class="contacts-loading-sheen h-3.5 w-3/4 rounded"></div><div class="contacts-loading-sheen h-3 w-1/2 rounded opacity-60"></div></div>
+                    </div>
+                }
+            </div>
+        </section>
+
+        <main aria-hidden="true" class="flex min-w-0 gap-3 bg-[#0B2140] p-3 sm:p-6 lg:min-h-0 lg:overflow-hidden lg:p-8">
+            <div class="crm-contact-card contacts-loading-card mx-auto flex min-h-0 min-w-0 max-h-[calc(100vh-2.5rem)] flex-1 gap-6 overflow-hidden rounded-[26px] bg-white p-6 shadow-xl sm:p-10 lg:h-full lg:max-h-full lg:p-12">
+                <div class="min-w-0 flex-1">
+                    <div class="flex items-center gap-5 border-b border-[#E4E8EE] pb-8">
+                        <div class="contacts-loading-sheen-light size-16 shrink-0 rounded-2xl"></div>
+                        <div class="min-w-0 flex-1 space-y-3"><div class="contacts-loading-sheen-light h-3 w-24 rounded"></div><div class="contacts-loading-sheen-light h-6 w-2/3 rounded"></div><div class="contacts-loading-sheen-light h-3.5 w-1/2 rounded"></div></div>
+                    </div>
+                    <div class="mt-8 border-t border-[#E4E8EE] pt-8">
+                        <div class="contacts-loading-sheen-light h-4 w-44 rounded"></div>
+                        <div class="mt-6 grid gap-6 sm:grid-cols-2">
+                            @for (var field = 0; field < 5; field++)
+                            {
+                                <div class="space-y-2"><div class="contacts-loading-sheen-light h-3 w-20 rounded"></div><div class="contacts-loading-sheen-light h-4 w-32 rounded"></div></div>
+                            }
+                        </div>
+                        <div class="mt-8 border-t border-[#E4E8EE] pt-7"><div class="contacts-loading-sheen-light h-4 w-24 rounded"></div><div class="contacts-loading-sheen-light mt-5 h-3.5 w-full rounded"></div><div class="contacts-loading-sheen-light mt-3 h-3.5 w-3/4 rounded"></div></div>
+                    </div>
+                </div>
+                <div class="hidden w-80 shrink-0 gap-2 lg:flex">
+                    <div class="contacts-loading-sheen-light flex-1 rounded-[26px]"></div>
+                    <div class="flex w-12 flex-col gap-2 border-l border-white/10 bg-[#102849] p-1"><div class="contacts-loading-sheen size-10 rounded"></div><div class="contacts-loading-sheen size-10 rounded opacity-60"></div></div>
+                </div>
+            </div>
+            <p role="status" class="sr-only">Kontakte werden geladen.</p>
+        </main>
+    </div>
 }
 else
 {
-    <div class="grid min-h-screen bg-[#0B2140] text-white lg:h-screen lg:min-h-0 lg:overflow-hidden lg:grid-cols-[232px_350px_minmax(0,1fr)]">
+    <div class="contacts-page-enter grid min-h-screen bg-[#0B2140] text-white lg:h-screen lg:min-h-0 lg:overflow-hidden lg:grid-cols-[232px_350px_minmax(0,1fr)]">
         <WorkspaceSidebar ActivePage="contacts" />
 
         <section class="crm-contact-list max-h-[55vh] min-h-[45vh] overflow-y-auto border-b border-white/10 bg-[#102849] lg:h-screen lg:min-h-0 lg:max-h-screen lg:border-b-0 lg:border-r">
@@ -66,79 +126,178 @@ else
             </div>
         </section>
 
-        <main class="min-w-0 bg-[#0B2140] p-5 sm:p-8 lg:min-h-0 lg:overflow-hidden">
+        <main class="relative flex min-w-0 bg-[#0B2140] p-3 sm:p-6 lg:min-h-0 lg:overflow-hidden lg:p-8">
             @if (SelectedContact is not null)
             {
-                <div class="crm-contact-card mx-auto max-h-[calc(100vh-2.5rem)] max-w-4xl overflow-y-auto rounded-[26px] bg-white px-6 py-8 text-[#102344] shadow-xl shadow-black/10 sm:px-10 lg:max-h-full lg:px-14 lg:py-12">
-                    <div class="flex flex-wrap items-start justify-between gap-5 border-b border-[#E4E8EE] pb-8">
-                        <div class="flex items-center gap-5">
-                            <span class="grid size-16 place-items-center rounded-2xl bg-[#0B2140] text-xl font-semibold text-[#FF9A2E]">@Initials(SelectedContact)</span>
-                            <div>
-                                <p class="text-xs font-medium uppercase tracking-[0.16em] text-[#E98200]">Kontaktprofil</p>
-                                <h2 class="mt-1 text-2xl font-semibold tracking-tight text-[#102344]">@SelectedContact.DisplayName</h2>
-                                <p class="mt-1 text-sm text-[#62728B]">@SelectedContact.Subtitle</p>
+                <div class="flex min-h-0 min-w-0 flex-1 gap-3 lg:h-full">
+                    <div class="crm-contact-card min-h-0 min-w-0 max-h-[calc(100vh-2.5rem)] flex-1 overflow-y-auto rounded-[26px] bg-white px-6 py-8 text-[#102344] shadow-xl shadow-black/10 sm:px-10 lg:h-full lg:max-h-full lg:px-14 lg:py-12">
+                        <div class="flex flex-wrap items-start justify-between gap-5 border-b border-[#E4E8EE] pb-8">
+                            <div class="flex items-center gap-5">
+                                <span class="grid size-16 place-items-center rounded-2xl bg-[#0B2140] text-xl font-semibold text-[#FF9A2E]">@Initials(SelectedContact)</span>
+                                <div>
+                                    <p class="text-xs font-medium uppercase tracking-[0.16em] text-[#E98200]">Kontaktprofil</p>
+                                    <h2 class="mt-1 text-2xl font-semibold tracking-tight text-[#102344]">@SelectedContact.DisplayName</h2>
+                                    <p class="mt-1 text-sm text-[#62728B]">@SelectedContact.Subtitle</p>
+                                </div>
                             </div>
+                        </div>
+
+                        <div class="mt-8 border-t border-[#E4E8EE] pt-8">
+                            <section class="pb-8">
+                                <h3 class="text-sm font-semibold text-[#102344]">Kontaktinformationen</h3>
+                                <div class="mt-5 grid gap-x-10 gap-y-6 sm:grid-cols-2">
+                                    <div><p class="text-xs text-[#738095]">E-Mail-Adresse</p><a class="mt-1.5 block break-all text-sm text-[#E98200] hover:text-[#BE6800]" href="mailto:@SelectedContact.Email">@SelectedContact.Email</a></div>
+                                    <div><p class="text-xs text-[#738095]">Telefon</p><a class="mt-1.5 block text-sm text-[#213852] hover:text-[#E98200]" href="tel:@SelectedContact.PhoneNumber">@SelectedContact.PhoneNumber</a></div>
+                                    <div><p class="text-xs text-[#738095]">Unternehmen</p><p class="mt-1.5 text-sm text-[#213852]">@SelectedContact.Company</p></div>
+                                    <div><p class="text-xs text-[#738095]">Kontaktart</p><p class="mt-1.5 text-sm text-[#213852]">@(SelectedContact.IsCustomer && SelectedContact.IsSupplier ? "Kunde · Lieferant" : SelectedContact.IsCustomer ? "Kunde" : SelectedContact.IsSupplier ? "Lieferant" : "Kontakt")</p></div>
+                                    <div class="sm:col-span-2"><p class="text-xs text-[#738095]">Anschrift</p><p class="mt-1.5 text-sm text-[#213852]">@SelectedContact.Address</p></div>
+                                </div>
+                            </section>
+
+                            <section class="border-t border-[#E4E8EE] py-7">
+                                <div class="flex items-center justify-between">
+                                    <h3 class="text-sm font-semibold text-[#102344]">Notizen</h3>
+                                    <span class="rounded-full bg-[#EEF0F3] px-2.5 py-1 text-xs text-[#58677D]">Intern</span>
+                                </div>
+                                <p class="mt-4 whitespace-pre-wrap text-sm leading-6 text-[#40536D]">@(string.IsNullOrWhiteSpace(SelectedContact.Notes) ? "Noch keine Notizen zu diesem Kontakt." : SelectedContact.Notes)</p>
+                            </section>
+
+                            <section class="border-t border-[#E4E8EE] py-7">
+                                <h3 class="text-sm font-semibold text-[#102344]">Letzte Aktivität</h3>
+                                <div class="mt-5 flex gap-3">
+                                    <span class="mt-1.5 size-2 shrink-0 rounded-full bg-[#FF8C1A] ring-4 ring-[#FF8C1A]/15"></span>
+                                    <div><p class="text-sm text-[#213852]">Kontakt zum CRM hinzugefügt</p><p class="mt-1 text-xs text-[#738095]">Northrail Workspace</p></div>
+                                </div>
+                            </section>
                         </div>
                     </div>
 
-                    <section class="py-8">
-                        <h3 class="text-sm font-semibold text-[#102344]">Kontaktinformationen</h3>
-                        <div class="mt-5 grid gap-x-10 gap-y-6 sm:grid-cols-2">
-                            <div><p class="text-xs text-[#738095]">E-Mail-Adresse</p><a class="mt-1.5 block break-all text-sm text-[#E98200] hover:text-[#BE6800]" href="mailto:@SelectedContact.Email">@SelectedContact.Email</a></div>
-                            <div><p class="text-xs text-[#738095]">Telefon</p><a class="mt-1.5 block text-sm text-[#213852] hover:text-[#E98200]" href="tel:@SelectedContact.PhoneNumber">@SelectedContact.PhoneNumber</a></div>
-                            <div><p class="text-xs text-[#738095]">Unternehmen</p><p class="mt-1.5 text-sm text-[#213852]">@SelectedContact.Company</p></div>
-                            <div><p class="text-xs text-[#738095]">Kontaktart</p><p class="mt-1.5 text-sm text-[#213852]">@(SelectedContact.IsCustomer && SelectedContact.IsSupplier ? "Kunde · Lieferant" : SelectedContact.IsCustomer ? "Kunde" : SelectedContact.IsSupplier ? "Lieferant" : "Kontakt")</p></div>
-                            <div class="sm:col-span-2"><p class="text-xs text-[#738095]">Anschrift</p><p class="mt-1.5 text-sm text-[#213852]">@SelectedContact.Address</p></div>
-                        </div>
-                    </section>
-
-                    <section class="border-t border-[#E4E8EE] py-7">
-                        <h3 class="text-sm font-semibold text-[#102344]">Personen <span class="ml-1 font-normal text-[#738095]">@SelectedContact.Persons.Count</span></h3>
-                        @if (SelectedContact.Persons.Count == 0)
+                    <div @ref="contactPanelHost" class="relative flex min-h-0 shrink-0">
+                        @if (activeContactPanel is not null)
                         {
-                            <p class="mt-4 text-sm text-[#738095]">Keine Personen zugeordnet.</p>
-                        }
-                        else
-                        {
-                            <div class="mt-4 divide-y divide-[#E4E8EE]">
-                                @foreach (var person in SelectedContact.Persons)
-                                {
-                                    <div @key="person.Number" class="grid gap-2 py-4 sm:grid-cols-2">
-                                        <div>
-                                            <p class="text-sm font-medium text-[#213852]">@person.DisplayName</p>
-                                            <p class="mt-1 text-xs text-[#738095]">@person.JobTitle</p>
-                                        </div>
-                                        <div class="text-sm sm:text-right">
-                                            @if (!string.IsNullOrWhiteSpace(person.Email))
-                                            {
-                                                <a class="block break-all text-[#E98200] hover:text-[#BE6800]" href="mailto:@person.Email">@person.Email</a>
-                                            }
-                                            @if (!string.IsNullOrWhiteSpace(person.PhoneNumber))
-                                            {
-                                                <a class="mt-1 block text-[#213852] hover:text-[#E98200]" href="tel:@person.PhoneNumber">@person.PhoneNumber</a>
-                                            }
-                                        </div>
-                                    </div>
-                                }
+                            <div data-contact-panel-splitter role="separator" aria-orientation="vertical" aria-label="Breite des Kontaktbereichs anpassen" aria-valuemin="260" aria-valuemax="520" aria-valuenow="320" tabindex="0" class="group hidden w-2 shrink-0 cursor-col-resize items-center justify-center rounded-full outline-none hover:bg-white/5 focus-visible:bg-white/10 lg:flex" title="Ziehen, um die Breite anzupassen">
+                                <span class="h-10 w-1 rounded-full bg-white/25 transition-colors group-hover:bg-[#FF9A2E] group-focus-visible:bg-[#FF9A2E]"></span>
                             </div>
+                            <aside data-contact-panel aria-label="@(activeContactPanel == ContactPanel.People ? "Personen" : "Dokumente")" class="absolute inset-y-0 right-12 z-30 flex w-72 max-w-[calc(100vw-4rem)] flex-col overflow-hidden rounded-[26px] border border-[#D9DFE7] bg-white text-[#102344] shadow-xl lg:static lg:z-auto lg:h-full lg:w-80 lg:shrink-0 lg:shadow-lg">
+                                <header class="flex items-center justify-between gap-3 border-b border-[#E4E8EE] px-4 py-4">
+                                    <div class="min-w-0">
+                                        <p class="text-[10px] font-bold uppercase tracking-[0.16em] text-[#738095]">Kontaktbereich</p>
+                                        @if (activeContactPanel == ContactPanel.People)
+                                        {
+                                            <h3 class="mt-1 truncate text-sm font-semibold">Personen <span class="ml-1 font-normal text-[#738095]">@SelectedContact.Persons.Count</span></h3>
+                                        }
+                                        else
+                                        {
+                                            <h3 class="mt-1 text-sm font-semibold">Dokumente <span class="ml-1 font-normal text-[#738095]">@DocumentCount</span></h3>
+                                        }
+                                    </div>
+                                    <button @onclick="CloseContactPanel" type="button" aria-label="Seitenbereich schließen" title="Seitenbereich schließen" class="grid size-8 shrink-0 place-items-center rounded text-[#62728B] hover:bg-[#EEF0F3] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#E98200]">
+                                        <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18" /></svg>
+                                    </button>
+                                </header>
+
+                                @if (activeContactPanel == ContactPanel.Documents && documentBreadcrumb.Count > 0)
+                                {
+                                    <nav aria-label="SharePoint-Pfad" class="flex flex-wrap items-center gap-1.5 border-b border-[#E4E8EE] px-4 py-3 text-xs">
+                                        <span class="font-medium text-[#738095]">Kunden</span>
+                                        @for (var breadcrumbIndex = 0; breadcrumbIndex < documentBreadcrumb.Count; breadcrumbIndex++)
+                                        {
+                                            var crumbIndex = breadcrumbIndex;
+                                            var crumb = documentBreadcrumb[crumbIndex];
+                                            <svg class="size-3 shrink-0 text-[#AAB3BF]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m9 18 6-6-6-6" /></svg>
+                                            @if (crumbIndex == documentBreadcrumb.Count - 1)
+                                            {
+                                                <span aria-current="page" class="max-w-36 truncate font-semibold text-[#213852]">@crumb.Name</span>
+                                            }
+                                            else
+                                            {
+                                                <button @onclick="() => NavigateToDocumentBreadcrumbAsync(crumbIndex)" type="button" disabled="@documentsLoading" class="max-w-36 truncate text-[#E98200] hover:text-[#BE6800] disabled:opacity-50">@crumb.Name</button>
+                                            }
+                                        }
+                                    </nav>
+                                }
+
+                                <div class="min-h-0 flex-1 overflow-y-auto px-4 py-2">
+                                    @if (activeContactPanel == ContactPanel.People)
+                                    {
+                                        @if (SelectedContact.Persons.Count == 0)
+                                        {
+                                            <p class="py-3 text-sm text-[#738095]">Keine Personen zugeordnet.</p>
+                                        }
+                                        else
+                                        {
+                                            <div class="divide-y divide-[#E4E8EE]">
+                                                @foreach (var person in SelectedContact.Persons)
+                                                {
+                                                    <div @key="person.Number" class="py-3">
+                                                        <p class="text-sm font-medium text-[#213852]">@person.DisplayName</p>
+                                                        @if (!string.IsNullOrWhiteSpace(person.JobTitle))
+                                                        {
+                                                            <p class="mt-1 text-xs text-[#738095]">@person.JobTitle</p>
+                                                        }
+                                                        @if (!string.IsNullOrWhiteSpace(person.Email))
+                                                        {
+                                                            <a class="mt-2 block break-all text-xs text-[#E98200] hover:text-[#BE6800]" href="mailto:@person.Email">@person.Email</a>
+                                                        }
+                                                        @if (!string.IsNullOrWhiteSpace(person.PhoneNumber))
+                                                        {
+                                                            <a class="mt-1 block text-xs text-[#213852] hover:text-[#E98200]" href="tel:@person.PhoneNumber">@person.PhoneNumber</a>
+                                                        }
+                                                    </div>
+                                                }
+                                            </div>
+                                        }
+                                    }
+                                    else
+                                    {
+                                        @if (documentsLoading)
+                                        {
+                                            <p role="status" class="py-3 text-sm text-[#738095]">SharePoint-Dokumente werden geladen ...</p>
+                                        }
+                                        else if (documentsError is not null)
+                                        {
+                                            <p role="alert" class="py-3 text-sm text-[#A34132]">@documentsError</p>
+                                        }
+                                        else if (documentItems.Count == 0)
+                                        {
+                                            <p class="py-3 text-sm text-[#738095]">Der Kundenordner enthält keine Dokumente oder Unterordner.</p>
+                                        }
+                                        else
+                                        {
+                                            <ul class="divide-y divide-[#E4E8EE]">
+                                                @foreach (var item in documentItems)
+                                                {
+                                                    <li @key="item.Id" class="py-2">
+                                                        @if (item.IsFolder)
+                                                        {
+                                                            <button @onclick="() => OpenSharePointFolderAsync(item)" type="button" disabled="@documentsLoading" class="flex w-full items-center justify-between gap-2 text-left text-sm text-[#213852] hover:text-[#BE6800] disabled:opacity-50">
+                                                                <span class="min-w-0 break-words">@item.Name</span>
+                                                                <span class="shrink-0 text-[10px] text-[#738095]">Ordner ›</span>
+                                                            </button>
+                                                        }
+                                                        else
+                                                        {
+                                                            <a href="@item.WebUrl" target="_blank" rel="noopener noreferrer" class="block break-words text-sm text-[#E98200] hover:text-[#BE6800]" title="In SharePoint öffnen">@item.Name</a>
+                                                            <span class="text-[10px] text-[#738095]">Datei</span>
+                                                        }
+                                                    </li>
+                                                }
+                                            </ul>
+                                        }
+                                    }
+                                </div>
+                            </aside>
                         }
-                    </section>
 
-                    <section class="border-t border-[#E4E8EE] py-7">
-                        <div class="flex items-center justify-between">
-                            <h3 class="text-sm font-semibold text-[#102344]">Notizen</h3>
-                            <span class="rounded-full bg-[#EEF0F3] px-2.5 py-1 text-xs text-[#58677D]">Intern</span>
-                        </div>
-                        <p class="mt-4 whitespace-pre-wrap text-sm leading-6 text-[#40536D]">@(string.IsNullOrWhiteSpace(SelectedContact.Notes) ? "Noch keine Notizen zu diesem Kontakt." : SelectedContact.Notes)</p>
-                    </section>
-
-                    <section class="border-t border-[#E4E8EE] py-7">
-                        <h3 class="text-sm font-semibold text-[#102344]">Letzte Aktivität</h3>
-                        <div class="mt-5 flex gap-3">
-                            <span class="mt-1.5 size-2 shrink-0 rounded-full bg-[#FF8C1A] ring-4 ring-[#FF8C1A]/15"></span>
-                            <div><p class="text-sm text-[#213852]">Kontakt zum CRM hinzugefügt</p><p class="mt-1 text-xs text-[#738095]">Northrail Workspace</p></div>
-                        </div>
-                    </section>
+                        <nav aria-label="Kontaktbereiche" class="relative z-20 flex w-12 shrink-0 flex-col gap-1 border-l border-white/10 bg-[#102849] p-1">
+                            <button @onclick="() => ToggleContactPanel(ContactPanel.People)" type="button" aria-label="Personen" title="Personen" aria-pressed="@(activeContactPanel == ContactPanel.People)" class="grid size-10 place-items-center rounded-sm transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[#FF8C1A] @(activeContactPanel == ContactPanel.People ? "bg-white/10 text-[#FFB45C]" : "text-white/55 hover:bg-white/5 hover:text-white")">
+                                <svg class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><circle cx="9" cy="8" r="3" /><path d="M3.5 19v-1a5.5 5.5 0 0 1 11 0v1zM16 5.5a3 3 0 0 1 0 5.8M18 14a4 4 0 0 1 2.5 3.7V19h-3" /></svg>
+                            </button>
+                            <button @onclick="() => ToggleContactPanel(ContactPanel.Documents)" type="button" aria-label="Dokumente" title="Dokumente" aria-pressed="@(activeContactPanel == ContactPanel.Documents)" class="grid size-10 place-items-center rounded-sm transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[#FF8C1A] @(activeContactPanel == ContactPanel.Documents ? "bg-white/10 text-[#FFB45C]" : "text-white/55 hover:bg-white/5 hover:text-white")">
+                                <svg class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M3.5 6.5h6l2 2h9v9a2 2 0 0 1-2 2h-13a2 2 0 0 1-2-2z" /><path d="M3.5 8.5V5a2 2 0 0 1 2-2h4l2 2h7a2 2 0 0 1 2 2v1.5" /></svg>
+                            </button>
+                        </nav>
+                    </div>
                 </div>
             }
         </main>
@@ -151,7 +310,37 @@ else
     private string searchTerm = string.Empty;
     private bool isLoading = true;
     private ElementReference contactList;
+    private ElementReference contactPanelHost;
     private bool contactNavigationAttached;
+    private bool panelResizeAttached;
+    private IReadOnlyList<SharePointDocumentItem> documentItems = [];
+    private string? documentDriveId;
+    private List<SharePointDocumentFolder> documentBreadcrumb = [];
+    private bool documentsLoading;
+    private string? documentsError;
+    private ContactPanel? activeContactPanel = ContactPanel.People;
+    private int DocumentCount
+    {
+        get
+        {
+            var count = 0;
+            foreach (var item in documentItems)
+            {
+                if (!item.IsFolder)
+                {
+                    count++;
+                }
+            }
+
+            return count;
+        }
+    }
+
+    private enum ContactPanel
+    {
+        People,
+        Documents
+    }
 
     private IEnumerable<Contact> FilteredContacts => contacts.Where(contact =>
         $"{contact.DisplayName} {contact.Email} {contact.PhoneNumber} {contact.Address} {string.Join(" ", contact.Persons.Select(person => $"{person.DisplayName} {person.JobTitle} {person.Email}"))}"
@@ -171,6 +360,12 @@ else
             await JS.InvokeVoidAsync("northrailChat.attachContactNavigation", contactList);
             contactNavigationAttached = true;
         }
+
+        if (SelectedContact is not null && activeContactPanel is not null && !panelResizeAttached)
+        {
+            await JS.InvokeVoidAsync("northrailChat.attachContactPanelSplitter", contactPanelHost);
+            panelResizeAttached = true;
+        }
     }
 
     private void EnsureFilteredSelection()
@@ -182,7 +377,113 @@ else
         }
     }
 
-    private void SelectContact(Contact contact) => SelectedContact = contact;
+    private async Task SelectContact(Contact contact)
+    {
+        SelectedContact = contact;
+        if (activeContactPanel == ContactPanel.Documents)
+        {
+            await LoadSharePointDocumentsAsync();
+        }
+    }
+
+    private async Task ToggleContactPanel(ContactPanel panel)
+    {
+        if (activeContactPanel == panel)
+        {
+            activeContactPanel = null;
+            panelResizeAttached = false;
+            return;
+        }
+
+        activeContactPanel = panel;
+        if (panel == ContactPanel.Documents)
+        {
+            await LoadSharePointDocumentsAsync();
+        }
+    }
+
+    private async Task LoadSharePointDocumentsAsync()
+    {
+        if (SelectedContact is null)
+        {
+            return;
+        }
+
+        documentsLoading = true;
+        documentsError = null;
+        documentItems = [];
+        documentDriveId = null;
+        documentBreadcrumb = [];
+        try
+        {
+            if (string.IsNullOrWhiteSpace(SelectedContact.ShortName))
+            {
+                documentsError = "Für diesen Kontakt ist keine Kurzbezeichnung hinterlegt.";
+                return;
+            }
+
+            var contents = await SharePointDocumentService.GetCustomerFolderContentsAsync(SelectedContact.ShortName);
+            documentDriveId = contents.DriveId;
+            documentBreadcrumb = [contents.Folder];
+            documentItems = contents.Items;
+        }
+        catch (SharePointDocumentException exception)
+        {
+            documentsError = exception.Message;
+        }
+        finally
+        {
+            documentsLoading = false;
+        }
+    }
+
+    private Task OpenSharePointFolderAsync(SharePointDocumentItem item) =>
+        item.IsFolder
+            ? LoadSharePointFolderAsync(new SharePointDocumentFolder(item.Id, item.Name))
+            : Task.CompletedTask;
+
+    private Task NavigateToDocumentBreadcrumbAsync(int index) =>
+        index >= 0 && index < documentBreadcrumb.Count
+            ? LoadSharePointFolderAsync(documentBreadcrumb[index], index)
+            : Task.CompletedTask;
+
+    private async Task LoadSharePointFolderAsync(SharePointDocumentFolder folder, int? breadcrumbIndex = null)
+    {
+        if (string.IsNullOrWhiteSpace(documentDriveId))
+        {
+            return;
+        }
+
+        documentsLoading = true;
+        documentsError = null;
+        try
+        {
+            var contents = await SharePointDocumentService.GetFolderContentsAsync(documentDriveId, folder);
+            documentItems = contents.Items;
+            if (breadcrumbIndex is { } index)
+            {
+                documentBreadcrumb = documentBreadcrumb.Take(index + 1).ToList();
+            }
+            else if (!documentBreadcrumb.Any(crumb => crumb.Id == folder.Id))
+            {
+                documentBreadcrumb.Add(folder);
+            }
+        }
+        catch (SharePointDocumentException exception)
+        {
+            documentsError = exception.Message;
+        }
+        finally
+        {
+            documentsLoading = false;
+        }
+    }
+
+    private void CloseContactPanel()
+    {
+        activeContactPanel = null;
+        panelResizeAttached = false;
+    }
 
     private static string Initials(Contact contact) =>
         string.Concat(contact.DisplayName.Split(' ', StringSplitOptions.RemoveEmptyEntries)

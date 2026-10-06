@@ -1,4 +1,5 @@
 using System.Text.RegularExpressions;
+using AngleSharp.Dom;
 using Ganss.Xss;
 using Markdig;
 
@@ -12,6 +13,7 @@ public sealed class ChatMarkdownRenderer
 
     private static readonly MarkdownPipeline Pipeline = new MarkdownPipelineBuilder()
         .UsePipeTables()
+        .UseGenericAttributes()
         .DisableHtml()
         .Build();
 
@@ -28,9 +30,17 @@ public sealed class ChatMarkdownRenderer
         sanitizer.AllowedTags.Clear();
         sanitizer.AllowedTags.UnionWith(AllowedTags);
         sanitizer.AllowedAttributes.Clear();
-        sanitizer.AllowedAttributes.UnionWith(["align", "class", "href", "start", "title"]);
+        sanitizer.AllowedAttributes.UnionWith(["align", "class", "download", "href", "start", "title"]);
         sanitizer.AllowedSchemes.Clear();
         sanitizer.AllowedSchemes.UnionWith(["http", "https", "mailto"]);
+        sanitizer.PostProcessNode += (_, args) =>
+        {
+            if (args.Node is IElement { LocalName: "a" } anchor && anchor.HasAttribute("href"))
+            {
+                anchor.SetAttribute("target", "_blank");
+                anchor.SetAttribute("rel", "noopener noreferrer");
+            }
+        };
 
         return sanitizer.Sanitize(Markdown.ToHtml(markdown, Pipeline));
     }
@@ -50,7 +60,7 @@ public sealed class ChatMarkdownRenderer
 
             return attachment is null
                 ? match.Value
-                : $"{match.Groups["prefix"].Value}{attachment.DownloadUrl}{match.Groups["suffix"].Value}";
+                : $"{match.Groups["prefix"].Value}{attachment.DownloadUrl}{match.Groups["suffix"].Value}{{download}}";
         });
     }
 }

@@ -23,6 +23,7 @@ public sealed class ContactService
                     NULLIF(k.Kurzbezeichnung, N''),
                     NULLIF(LTRIM(RTRIM(CONCAT(k.Firma1, N' ', k.Firma2))), N''),
                     N'') AS Company,
+                COALESCE(NULLIF(k.Kurzbezeichnung, N''), N'') AS ShortName,
                 COALESCE(NULLIF(k.EMail, N''), N'') AS Email,
                 COALESCE(NULLIF(k.Telefon, N''), NULLIF(k.Mobil, N''), N'') AS PhoneNumber,
                 COALESCE(NULLIF(k.Info, N''), N'') AS Notes,
@@ -56,6 +57,7 @@ public sealed class ContactService
         var emailOrdinal = reader.GetOrdinal("Email");
         var phoneOrdinal = reader.GetOrdinal("PhoneNumber");
         var companyOrdinal = reader.GetOrdinal("Company");
+        var shortNameOrdinal = reader.GetOrdinal("ShortName");
         var notesOrdinal = reader.GetOrdinal("Notes");
         var streetOrdinal = reader.GetOrdinal("Street");
         var postalCodeOrdinal = reader.GetOrdinal("PostalCode");
@@ -81,6 +83,7 @@ public sealed class ContactService
                     Number = contactNumber,
                     Key = $"K:{contactNumber}",
                     Company = reader.GetString(companyOrdinal),
+                    ShortName = reader.GetString(shortNameOrdinal),
                     Email = reader.GetString(emailOrdinal),
                     PhoneNumber = reader.GetString(phoneOrdinal),
                     Notes = reader.GetString(notesOrdinal),
