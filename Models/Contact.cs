@@ -7,6 +7,7 @@ public sealed class Contact
     public string Email { get; init; } = string.Empty;
     public string PhoneNumber { get; init; } = string.Empty;
     public string Company { get; init; } = string.Empty;
+    public string ShortName { get; init; } = string.Empty;
     public string Notes { get; init; } = string.Empty;
     public string Street { get; init; } = string.Empty;
     public string PostalCode { get; init; } = string.Empty;
