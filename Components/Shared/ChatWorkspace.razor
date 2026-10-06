@@ -11,7 +11,9 @@
                 <p class="text-xs font-medium uppercase tracking-[0.16em] text-[#FF9A2E]">CRM / Agent</p>
                 <h2 class="mt-1 text-xl font-semibold tracking-tight text-white">Agent-Chat <span class="ml-1 text-sm font-normal text-white/45">@ChatState.Conversations.Count</span></h2>
             </div>
-            <button @onclick="StartNewChat" type="button" aria-label="Neuen Chat starten" title="Neuer Chat" class="grid size-9 place-items-center rounded-full bg-[#FF8C1A] text-xl leading-none text-[#0B2140] transition-colors duration-150 hover:bg-[#FF9A2E] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#FF8C1A] motion-reduce:transition-none">+</button>
+            <button @onclick="StartNewChat" type="button" aria-label="Neuen Chat starten" title="Neuer Chat" class="grid size-9 place-items-center rounded-full bg-[#FF8C1A] text-[#0B2140] transition-colors duration-150 hover:bg-[#FF9A2E] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#FF8C1A] motion-reduce:transition-none">
+                <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>
+            </button>
         </header>
 
         <div class="border-b border-white/10 p-4">
