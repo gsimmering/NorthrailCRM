@@ -72,6 +72,16 @@ window.northrailChat = (() => {
             contactNavigationHandlers.set(element, handler);
             element.addEventListener("keydown", handler);
         },
+        focusFirstContact(element) {
+            const firstOption = element.querySelector('[role="option"]');
+            if (!firstOption) {
+                return;
+            }
+
+            firstOption.focus();
+            firstOption.click();
+            firstOption.scrollIntoView({ block: "nearest" });
+        },
         detachContactNavigation(element) {
             const handler = contactNavigationHandlers.get(element);
             if (handler) {

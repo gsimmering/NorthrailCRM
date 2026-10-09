@@ -1,0 +1,251 @@
+@page "/mietvertraege"
+@rendermode InteractiveServer
+@using NorthrailCRM.Models
+@using NorthrailCRM.Services
+@using NorthrailCRM.Components.Shared
+@using Microsoft.JSInterop
+@inject RentalContractService RentalContractService
+@inject IJSRuntime JS
+
+<PageTitle>Mietverträge | Northrail CRM</PageTitle>
+
+@if (isLoading)
+{
+    <div aria-busy="true" class="rental-contracts-loading-layout grid min-h-screen bg-[#0B2140] text-white lg:h-screen lg:min-h-0 lg:overflow-hidden lg:grid-cols-[232px_350px_minmax(0,1fr)]">
+        <aside aria-hidden="true" class="hidden flex-col border-r border-white/10 bg-[#0B2140] px-5 py-7 lg:flex">
+            <div class="rental-loading-sheen mb-12 h-5 w-36 rounded"></div>
+            <div class="rental-loading-sheen mb-5 h-3 w-20 rounded"></div>
+            <div class="space-y-3"><div class="rental-loading-sheen h-10 rounded-full"></div><div class="rental-loading-sheen h-10 rounded-full opacity-60"></div></div>
+            <div class="mt-auto flex items-center gap-3 border-t border-white/10 pt-5"><div class="rental-loading-sheen size-9 rounded-full"></div><div class="flex-1 space-y-2"><div class="rental-loading-sheen h-3 w-28 rounded"></div><div class="rental-loading-sheen h-2.5 w-20 rounded opacity-60"></div></div></div>
+        </aside>
+
+        <section aria-hidden="true" class="max-h-[55vh] min-h-[45vh] overflow-hidden border-b border-white/10 bg-[#102849] lg:h-screen lg:min-h-0 lg:max-h-screen lg:border-b-0 lg:border-r">
+            <header class="border-b border-white/10 px-6 py-6"><div class="rental-loading-sheen h-3 w-28 rounded"></div><div class="rental-loading-sheen mt-3 h-6 w-44 rounded"></div></header>
+            <div class="border-b border-white/10 p-4"><div class="rental-loading-sheen h-10 rounded-lg"></div><div class="mt-5 flex justify-between"><div class="rental-loading-sheen h-3 w-20 rounded"></div><div class="rental-loading-sheen h-3 w-16 rounded"></div></div></div>
+            <div class="divide-y divide-white/10">
+                @for (var row = 0; row < 8; row++)
+                {
+                    <div class="flex items-start gap-3 px-5 py-4"><div class="rental-loading-sheen size-10 shrink-0 rounded-full"></div><div class="min-w-0 flex-1 space-y-2.5 pt-1"><div class="rental-loading-sheen h-3.5 w-3/4 rounded"></div><div class="rental-loading-sheen h-3 w-1/2 rounded opacity-60"></div><div class="rental-loading-sheen h-3 w-2/3 rounded opacity-40"></div></div></div>
+                }
+            </div>
+        </section>
+
+        <main aria-hidden="true" class="min-w-0 bg-[#0B2140] p-3 sm:p-6 lg:min-h-0 lg:overflow-hidden lg:p-8">
+            <article class="rental-contracts-loading-card mx-auto max-h-[calc(100vh-2.5rem)] max-w-5xl overflow-hidden rounded-[26px] bg-white px-6 py-8 shadow-xl sm:px-10 lg:h-full lg:max-h-full lg:px-14 lg:py-12">
+                <header class="flex items-center gap-5 border-b border-[#E4E8EE] pb-8"><div class="rental-loading-sheen-light size-16 shrink-0 rounded-2xl"></div><div class="min-w-0 flex-1 space-y-3"><div class="rental-loading-sheen-light h-3 w-24 rounded"></div><div class="rental-loading-sheen-light h-6 w-2/3 rounded"></div><div class="rental-loading-sheen-light h-3.5 w-1/2 rounded"></div></div></header>
+                <div class="flex gap-2 border-b border-[#E4E8EE] py-5"><div class="rental-loading-sheen-light h-7 w-20 rounded-full"></div><div class="rental-loading-sheen-light h-7 w-28 rounded-full"></div><div class="rental-loading-sheen-light h-7 w-32 rounded-full"></div></div>
+                <div class="mt-6 grid gap-x-10 gap-y-7 sm:grid-cols-2">
+                    @for (var field = 0; field < 12; field++)
+                    {
+                        <div class="space-y-2"><div class="rental-loading-sheen-light h-3 w-24 rounded"></div><div class="rental-loading-sheen-light h-4 w-40 rounded"></div></div>
+                    }
+                </div>
+                <p role="status" class="sr-only">Mietverträge werden geladen.</p>
+            </article>
+        </main>
+    </div>
+}
+else
+{
+    <div class="rental-contracts-page-enter grid min-h-screen bg-[#0B2140] text-white lg:h-screen lg:min-h-0 lg:overflow-hidden lg:grid-cols-[232px_350px_minmax(0,1fr)]">
+        <WorkspaceSidebar ActivePage="contracts" />
+
+        <section class="crm-contact-list max-h-[55vh] min-h-[45vh] overflow-y-auto border-b border-white/10 bg-[#102849] lg:h-screen lg:min-h-0 lg:max-h-screen lg:border-b-0 lg:border-r">
+            <div class="sticky top-0 z-10 bg-[#102849]">
+                <header class="border-b border-white/10 px-6 py-6">
+                    <p class="text-xs font-medium uppercase tracking-[0.16em] text-[#FF9A2E]">CRM / Verträge</p>
+                    <h1 class="mt-1 text-xl font-semibold tracking-tight text-white">Mietverträge <span class="ml-1 text-sm font-normal text-white/45">@contracts.Count</span></h1>
+                </header>
+                <div class="border-b border-white/10 p-4">
+                    <label class="flex items-center gap-2.5 rounded-lg border border-white/15 bg-[#0B2140] px-3 py-2.5 focus-within:border-[#FF8C1A]">
+                        <svg class="size-4 shrink-0 text-white/45" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m16 16 4 4"/></svg>
+                        <input @bind="searchTerm" @bind:event="oninput" @bind:after="EnsureFilteredSelection" @onkeydown="HandleSearchKeyDown" placeholder="Vertrag, Mieter oder Fahrzeug suchen" class="w-full bg-transparent text-sm text-white outline-none placeholder:text-white/40" />
+                    </label>
+                    <div role="group" aria-label="Mietverträge filtern" class="mt-3 grid grid-cols-2 gap-0.5 rounded-md border border-white/10 bg-white/[0.03] p-0.5">
+                        <button type="button" @onclick="() => SetRunningFilter(true)" aria-pressed="@showOnlyRunning" class="rounded px-2.5 py-1.5 text-[11px] font-medium transition-colors @(showOnlyRunning ? "bg-white/10 text-white/90" : "text-white/50 hover:text-white/80")">Laufend</button>
+                        <button type="button" @onclick="() => SetRunningFilter(false)" aria-pressed="@(!showOnlyRunning)" class="rounded px-2.5 py-1.5 text-[11px] font-medium transition-colors @(!showOnlyRunning ? "bg-white/10 text-white/90" : "text-white/50 hover:text-white/80")">Alle</button>
+                    </div>
+                    <div class="mt-4 flex items-center justify-between text-xs">
+                        <span class="font-medium text-white/70">@(showOnlyRunning ? "Laufende Verträge" : "Alle Verträge")</span>
+                        <span class="text-white/45">@FilteredContracts.Count() Ergebnisse</span>
+                    </div>
+                </div>
+            </div>
+
+            <div @ref="contractList" role="listbox" aria-label="Mietverträge" class="divide-y divide-white/10">
+                @foreach (var contract in FilteredContracts)
+                {
+                    var selected = SelectedContract?.Number == contract.Number;
+                    <button @key="contract.Number" data-contract-number="@contract.Number" role="option" aria-selected="@selected" tabindex="@(selected ? 0 : -1)" @onclick="() => SelectContract(contract)" class="flex w-full items-start gap-3 px-5 py-4 text-left transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-inset focus-visible:outline-[#FF8C1A] @(selected ? "bg-[#FF8C1A]/15" : "hover:bg-white/5")">
+                        <span class="grid size-10 shrink-0 place-items-center rounded-full bg-white/10 text-[10px] font-semibold text-[#FFB45C]">@TenantInitials(contract.Tenant)</span>
+                        <span class="min-w-0 flex-1">
+                            <span class="flex items-center justify-between gap-2">
+                                <span class="truncate text-sm font-medium text-white">@contract.ContractNumber</span>
+                                @if (selected)
+                                {
+                                    <span class="size-1.5 shrink-0 rounded-full bg-[#FF8C1A]"></span>
+                                }
+                            </span>
+                            <span class="mt-1 flex min-w-0 items-center gap-1 text-xs">
+                                <span class="min-w-0 flex-1 truncate text-white/65">@DisplayOrFallback(contract.Tenant)</span>
+                                <span class="min-w-0 flex-1 truncate text-white/50">@DisplayOrFallback(contract.Lessor)</span>
+                            </span>
+                            <span class="mt-1 block truncate text-xs text-white/45">@contract.Vehicle</span>
+                        </span>
+                    </button>
+                }
+                @if (!FilteredContracts.Any())
+                {
+                    <p class="px-5 py-10 text-center text-sm text-white/50">Keine Mietverträge gefunden.</p>
+                }
+            </div>
+        </section>
+
+        <main class="min-w-0 bg-[#0B2140] p-3 sm:p-6 lg:min-h-0 lg:overflow-hidden lg:p-8">
+            @if (SelectedContract is not null)
+            {
+                <article class="crm-contact-card mx-auto max-h-[calc(100vh-2.5rem)] max-w-5xl overflow-y-auto rounded-[26px] bg-white px-6 py-8 text-[#102344] shadow-xl shadow-black/10 sm:px-10 lg:max-h-full lg:px-14 lg:py-12">
+                    <header class="flex flex-wrap items-start justify-between gap-5 border-b border-[#E4E8EE] pb-8">
+                        <div class="flex min-w-0 items-center gap-5">
+                            <span class="grid size-16 shrink-0 place-items-center rounded-2xl bg-[#0B2140] text-sm font-semibold text-[#FF9A2E]">MV</span>
+                            <div class="min-w-0">
+                                <p class="text-xs font-medium uppercase tracking-[0.16em] text-[#E98200]">Mietvertrag</p>
+                                <h2 class="mt-1 break-words text-2xl font-semibold tracking-tight text-[#102344]">@SelectedContract.ContractNumber</h2>
+                                <p class="mt-1 text-sm text-[#62728B]">@SelectedContract.Tenant · @SelectedContract.Vehicle</p>
+                            </div>
+                        </div>
+                        <div class="flex flex-wrap gap-2 text-xs">
+                            <span class="rounded-full px-2.5 py-1 @(SelectedContract.IsActive ? "bg-[#E7F5ED] text-[#287348]" : "bg-[#EEF0F3] text-[#58677D]")">@(SelectedContract.IsActive ? "Aktiv" : "Inaktiv")</span>
+                            <span class="rounded-full px-2.5 py-1 @(SelectedContract.IsReleased ? "bg-[#E7F5ED] text-[#287348]" : "bg-[#FFF3E0] text-[#9A5B00]")">@(SelectedContract.IsReleased ? "Freigegeben" : "Nicht freigegeben")</span>
+                            <span class="rounded-full px-2.5 py-1 @(SelectedContract.IsSigned ? "bg-[#E7F5ED] text-[#287348]" : "bg-[#EEF0F3] text-[#58677D]")">@(SelectedContract.IsSigned ? "Unterschrieben" : "Nicht unterschrieben")</span>
+                        </div>
+                    </header>
+
+                    <section class="mt-4 py-4">
+                        <h3 class="text-sm font-semibold text-[#102344]">Vertragsdaten</h3>
+                        <div class="mt-5 grid gap-x-10 gap-y-6 sm:grid-cols-2">
+                            <div><p class="text-xs text-[#738095]">Vertragsnummer</p><p class="mt-1.5 break-words text-sm text-[#213852]">@SelectedContract.ContractNumber</p></div>
+                            <div><p class="text-xs text-[#738095]">Vertragsart</p><p class="mt-1.5 text-sm text-[#213852]">@DisplayOrFallback(SelectedContract.ContractType)</p></div>
+                            <div><p class="text-xs text-[#738095]">Vermietungsart</p><p class="mt-1.5 text-sm text-[#213852]">@DisplayOrFallback(SelectedContract.RentalType)</p></div>
+                            <div><p class="text-xs text-[#738095]">Vertragsdatum</p><p class="mt-1.5 text-sm text-[#213852]">@FormatDate(SelectedContract.ContractDate)</p></div>
+                            <div><p class="text-xs text-[#738095]">Vertragszeitraum</p><p class="mt-1.5 text-sm text-[#213852]">@FormatPeriod(SelectedContract.ContractPeriodFrom, SelectedContract.ContractPeriodTo)</p></div>
+                            <div><p class="text-xs text-[#738095]">Bestellnummer</p><p class="mt-1.5 text-sm text-[#213852]">@DisplayOrFallback(SelectedContract.OrderNumber)</p></div>
+                        </div>
+                    </section>
+
+                    <section class="border-t border-[#E4E8EE] py-7">
+                        <h3 class="text-sm font-semibold text-[#102344]">Beteiligte</h3>
+                        <div class="mt-5 grid gap-x-10 gap-y-6 sm:grid-cols-2">
+                            <div><p class="text-xs text-[#738095]">Mieter</p><p class="mt-1.5 text-sm text-[#213852]">@DisplayOrFallback(SelectedContract.Tenant)</p></div>
+                            <div><p class="text-xs text-[#738095]">Vermieter</p><p class="mt-1.5 text-sm text-[#213852]">@DisplayOrFallback(SelectedContract.Lessor)</p></div>
+                            <div><p class="text-xs text-[#738095]">Fahrzeughalter</p><p class="mt-1.5 text-sm text-[#213852]">@DisplayOrFallback(SelectedContract.VehicleHolder)</p></div>
+                        </div>
+                    </section>
+
+                    <section class="border-t border-[#E4E8EE] py-7">
+                        <h3 class="text-sm font-semibold text-[#102344]">Fahrzeug und Abrechnung</h3>
+                        <div class="mt-5 grid gap-x-10 gap-y-6 sm:grid-cols-2">
+                            <div><p class="text-xs text-[#738095]">Fahrzeug</p><p class="mt-1.5 text-sm text-[#213852]">@DisplayOrFallback(SelectedContract.Vehicle)</p></div>
+                            <div><p class="text-xs text-[#738095]">Abrechnungszeitraum</p><p class="mt-1.5 text-sm text-[#213852]">@FormatPeriod(SelectedContract.BillingPeriodFrom, SelectedContract.BillingPeriodTo)</p></div>
+                            <div><p class="text-xs text-[#738095]">Kaution</p><p class="mt-1.5 text-sm text-[#213852]">@FormatMoney(SelectedContract.DepositAmount)</p></div>
+                        </div>
+                    </section>
+                </article>
+            }
+            else
+            {
+                <div class="grid h-full min-h-64 place-items-center rounded-[26px] border border-dashed border-white/15 text-sm text-white/50">Mietvertrag auswählen</div>
+            }
+        </main>
+    </div>
+}
+
+@code {
+    private IReadOnlyList<RentalContract> contracts = [];
+    private RentalContract? SelectedContract;
+    private string searchTerm = string.Empty;
+    private bool showOnlyRunning = true;
+    private bool isLoading = true;
+    private ElementReference contractList;
+    private bool contractNavigationAttached;
+
+    private IEnumerable<RentalContract> FilteredContracts => contracts.Where(contract =>
+        (!showOnlyRunning || IsRunning(contract))
+        && $"{contract.ContractNumber} {contract.Tenant} {contract.Lessor} {contract.VehicleHolder} {contract.Vehicle} {contract.ContractType} {contract.RentalType} {contract.OrderNumber}"
+            .Contains(searchTerm, StringComparison.OrdinalIgnoreCase));
+
+    protected override async Task OnInitializedAsync()
+    {
+        contracts = await RentalContractService.GetRentalContractsAsync();
+        EnsureFilteredSelection();
+        isLoading = false;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!contractNavigationAttached && contracts.Count > 0)
+        {
+            await JS.InvokeVoidAsync("northrailChat.attachContactNavigation", contractList);
+            contractNavigationAttached = true;
+        }
+    }
+
+    private void EnsureFilteredSelection()
+    {
+        var visibleContracts = FilteredContracts.ToList();
+        if (visibleContracts.Count == 0)
+        {
+            SelectedContract = null;
+        }
+        else if (!visibleContracts.Any(contract => contract.Number == SelectedContract?.Number))
+        {
+            SelectedContract = visibleContracts[0];
+        }
+    }
+
+    private void SetRunningFilter(bool onlyRunning)
+    {
+        showOnlyRunning = onlyRunning;
+        EnsureFilteredSelection();
+    }
+
+    private static bool IsRunning(RentalContract contract)
+    {
+        var today = DateTime.Today;
+        return contract.ContractPeriodFrom is { } from
+            && contract.ContractPeriodTo is { } to
+            && from.Date <= today
+            && today <= to.Date;
+    }
+
+    private void SelectContract(RentalContract contract) => SelectedContract = contract;
+
+    private async Task HandleSearchKeyDown(KeyboardEventArgs args)
+    {
+        if (args.Key == "ArrowDown" && FilteredContracts.Any())
+        {
+            await JS.InvokeVoidAsync("northrailChat.focusFirstContact", contractList);
+        }
+    }
+
+    private static string TenantInitials(string tenant)
+    {
+        var trimmedTenant = tenant.Trim();
+        return trimmedTenant.Length == 0
+            ? "?"
+            : trimmedTenant[..Math.Min(2, trimmedTenant.Length)].ToUpperInvariant();
+    }
+
+    private static string DisplayOrFallback(string value) =>
+        string.IsNullOrWhiteSpace(value) ? "Nicht hinterlegt" : value;
+
+    private static string FormatDate(DateTime? value) =>
+        value?.ToString("dd.MM.yyyy") ?? "Nicht hinterlegt";
+
+    private static string FormatPeriod(DateTime? from, DateTime? to) =>
+        $"{FormatDate(from)} bis {FormatDate(to)}";
+
+    private static string FormatMoney(decimal? value) => value.HasValue
+        ? value.Value.ToString("N2") + " €"
+        : "Nicht hinterlegt";
+}

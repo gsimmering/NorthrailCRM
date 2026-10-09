@@ -91,7 +91,7 @@ else
             <div class="border-b border-white/10 p-4">
                 <label class="flex items-center gap-2.5 rounded-lg border border-white/15 bg-[#0B2140] px-3 py-2.5 focus-within:border-[#FF8C1A]">
                     <svg class="size-4 shrink-0 text-white/45" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m16 16 4 4"/></svg>
-                    <input @bind="searchTerm" @bind:event="oninput" @bind:after="EnsureFilteredSelection" placeholder="Name, Firma oder E-Mail suchen" class="w-full bg-transparent text-sm text-white outline-none placeholder:text-white/40" />
+                    <input @bind="searchTerm" @bind:event="oninput" @bind:after="EnsureFilteredSelection" @onkeydown="HandleSearchKeyDown" placeholder="Name, Firma oder E-Mail suchen" class="w-full bg-transparent text-sm text-white outline-none placeholder:text-white/40" />
                     <kbd class="hidden rounded border border-white/20 px-1.5 py-0.5 text-[10px] text-white/45 sm:inline">⌘ K</kbd>
                 </label>
                 <div class="mt-4 flex items-center justify-between text-xs">
@@ -142,7 +142,7 @@ else
                             </div>
                         </div>
 
-                        <div class="mt-8 border-t border-[#E4E8EE] pt-8">
+                        <div class="mt-4 pt-4">
                             <section class="pb-8">
                                 <h3 class="text-sm font-semibold text-[#102344]">Kontaktinformationen</h3>
                                 <div class="mt-5 grid gap-x-10 gap-y-6 sm:grid-cols-2">
@@ -374,6 +374,14 @@ else
         if (visibleContacts.Count > 0 && !visibleContacts.Any(contact => contact.Key == SelectedContact?.Key))
         {
             SelectedContact = visibleContacts[0];
+        }
+    }
+
+    private async Task HandleSearchKeyDown(KeyboardEventArgs args)
+    {
+        if (args.Key == "ArrowDown" && FilteredContacts.Any())
+        {
+            await JS.InvokeVoidAsync("northrailChat.focusFirstContact", contactList);
         }
     }
 
