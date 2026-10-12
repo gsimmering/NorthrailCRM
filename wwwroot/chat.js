@@ -2,6 +2,7 @@ window.northrailChat = (() => {
     const enterHandlers = new WeakMap();
     const contactNavigationHandlers = new WeakMap();
     const contactPanelSplitterHandlers = new WeakMap();
+    let activitySpeechRecognition = null;
 
     return {
         attachEnterToSend(element, dotNetReference) {
@@ -81,6 +82,55 @@ window.northrailChat = (() => {
             firstOption.focus();
             firstOption.click();
             firstOption.scrollIntoView({ block: "nearest" });
+        },
+        startActivitySpeech() {
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            if (!SpeechRecognition) {
+                throw new Error("Spracherkennung wird in diesem Browser nicht unterstützt.");
+            }
+            if (activitySpeechRecognition) {
+                throw new Error("Eine Spracheingabe läuft bereits.");
+            }
+
+            return new Promise((resolve, reject) => {
+                const recognition = new SpeechRecognition();
+                let transcript = "";
+                let recognitionError = null;
+                recognition.lang = "de-DE";
+                recognition.continuous = false;
+                recognition.interimResults = false;
+                recognition.maxAlternatives = 1;
+                activitySpeechRecognition = recognition;
+                recognition.onresult = event => {
+                    transcript = Array.from(event.results)
+                        .map(result => result[0]?.transcript ?? "")
+                        .join(" ")
+                        .trim();
+                };
+                recognition.onerror = event => {
+                    recognitionError = event.error;
+                };
+                recognition.onend = () => {
+                    if (activitySpeechRecognition === recognition) {
+                        activitySpeechRecognition = null;
+                    }
+                    if (recognitionError) {
+                        reject(new Error(recognitionError));
+                    } else {
+                        resolve(transcript);
+                    }
+                };
+
+                try {
+                    recognition.start();
+                } catch (error) {
+                    activitySpeechRecognition = null;
+                    reject(error);
+                }
+            });
+        },
+        stopActivitySpeech() {
+            activitySpeechRecognition?.stop();
         },
         detachContactNavigation(element) {
             const handler = contactNavigationHandlers.get(element);

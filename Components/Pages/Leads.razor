@@ -60,17 +60,12 @@ else
         </aside>
 
         <main class="min-w-0 overflow-y-auto bg-[#0B2140] p-3 sm:p-6 lg:min-h-0 lg:overflow-hidden lg:p-8">
-            <EditForm Model="currentLead" OnValidSubmit="SaveLeadAsync" class="mx-auto flex max-w-[1440px] flex-col gap-3 lg:h-full lg:flex-row">
+            <EditForm Model="currentLead" OnValidSubmit="SaveLeadAsync" class="mx-auto max-w-5xl lg:h-full">
                 <DataAnnotationsValidator />
-                <article class="min-w-0 flex-1 rounded-[20px] bg-white px-5 py-6 text-[#102344] shadow-xl shadow-black/10 sm:px-8 sm:py-8 lg:h-full lg:max-h-full lg:overflow-y-auto lg:px-10">
+                <article class="min-w-0 rounded-[20px] bg-white px-5 py-6 text-[#102344] shadow-xl shadow-black/10 sm:px-8 sm:py-8 lg:max-h-full lg:overflow-y-auto lg:px-10">
                     <header class="flex flex-wrap items-start justify-between gap-4 border-b border-[#E4E8EE] pb-6">
                         <div>
-                            <p class="text-xs font-medium uppercase tracking-[0.16em] text-[#E98200]">@(IsViewingLead ? "Gespeicherter Lead" : "Neuer Lead")</p>
                             <h2 class="mt-1 text-xl font-semibold">@(IsViewingLead ? currentLead.CompanyName : "Lead erfassen")</h2>
-                            @if (IsViewingLead)
-                            {
-                                <p class="mt-1 text-sm text-[#738095]">Erfasst am @currentLead.CreatedAtUtc.ToLocalTime().ToString("dd.MM.yyyy HH:mm")</p>
-                            }
                         </div>
                         @if (IsViewingLead)
                         {
@@ -91,7 +86,15 @@ else
                     }
                     <ValidationSummary class="mt-4 text-sm text-[#A34132]" />
 
+                    <nav role="tablist" aria-label="Lead-Bereiche" class="mt-2 flex gap-1 overflow-x-auto border-b border-[#E4E8EE]">
+                        <button @onclick="() => SetLeadSection(LeadSection.BasicData)" type="button" role="tab" aria-selected="@(activeLeadSection == LeadSection.BasicData)" class="whitespace-nowrap border-b-2 px-4 py-3 text-sm font-medium transition-colors @(activeLeadSection == LeadSection.BasicData ? "border-[#E98200] text-[#B96600]" : "border-transparent text-[#738095] hover:text-[#40536D]")">Basisdaten</button>
+                        <button @onclick="() => SetLeadSection(LeadSection.ProjectDetails)" type="button" role="tab" aria-selected="@(activeLeadSection == LeadSection.ProjectDetails)" class="whitespace-nowrap border-b-2 px-4 py-3 text-sm font-medium transition-colors @(activeLeadSection == LeadSection.ProjectDetails ? "border-[#E98200] text-[#B96600]" : "border-transparent text-[#738095] hover:text-[#40536D]")">Projektdaten</button>
+                        <button @onclick="() => SetLeadSection(LeadSection.TechnicalRequirements)" type="button" role="tab" aria-selected="@(activeLeadSection == LeadSection.TechnicalRequirements)" class="whitespace-nowrap border-b-2 px-4 py-3 text-sm font-medium transition-colors @(activeLeadSection == LeadSection.TechnicalRequirements ? "border-[#E98200] text-[#B96600]" : "border-transparent text-[#738095] hover:text-[#40536D]")">Technische Anforderungen</button>
+                    </nav>
+
                     <fieldset disabled="@IsViewingLead" class="min-w-0 disabled:opacity-90">
+                        @if (activeLeadSection == LeadSection.BasicData)
+                        {
                         <section class="border-b border-[#E4E8EE] py-6">
                             <h3 class="text-sm font-semibold">Basisdaten &amp; Kundenprofil</h3>
                             <div class="mt-5 grid gap-4 sm:grid-cols-2">
@@ -144,7 +147,9 @@ else
                                 </div>
                             </fieldset>
                         </section>
-
+                        }
+                        else if (activeLeadSection == LeadSection.ProjectDetails)
+                        {
                         <section class="py-6">
                             <h3 class="text-sm font-semibold">Projektdetails &amp; Einsatzbereich</h3>
                             <div class="mt-5 grid gap-4 sm:grid-cols-2">
@@ -188,6 +193,79 @@ else
                                 </div>
                             </div>
                         </section>
+                        }
+                        else
+                        {
+                            <section class="py-6">
+                                <h3 class="text-sm font-semibold">Technische Fahrzeug-Anforderungen</h3>
+                                <div class="mt-5 grid gap-4 sm:grid-cols-2">
+                                    <div>
+                                        <label for="lead-traction" class="block text-xs font-medium text-[#62728B]">Traktionsart</label>
+                                        <InputSelect id="lead-traction" @bind-Value="currentLead.TractionType" class="mt-1.5 w-full rounded-md border border-[#D9DFE7] bg-white px-3 py-2.5 text-sm outline-none focus:border-[#E98200]">
+                                            <option value="">Bitte auswählen</option>
+                                            @foreach (var option in TractionOptions)
+                                            {
+                                                <option value="@option">@option</option>
+                                            }
+                                        </InputSelect>
+                                    </div>
+                                    <div>
+                                        <label for="lead-locomotive-count" class="block text-xs font-medium text-[#62728B]">Gewünschte Anzahl an Loks</label>
+                                        <InputNumber id="lead-locomotive-count" @bind-Value="currentLead.DesiredLocomotiveCount" min="1" step="1" class="mt-1.5 w-full rounded-md border border-[#D9DFE7] bg-white px-3 py-2.5 text-sm outline-none focus:border-[#E98200]" />
+                                        <ValidationMessage For="() => currentLead.DesiredLocomotiveCount" class="mt-1 block text-xs text-[#A34132]" />
+                                    </div>
+                                    <div>
+                                        <label for="lead-platform" class="block text-xs font-medium text-[#62728B]">Gewünschte Baureihe / Plattform</label>
+                                        <InputSelect id="lead-platform" @bind-Value="currentLead.LocomotivePlatform" class="mt-1.5 w-full rounded-md border border-[#D9DFE7] bg-white px-3 py-2.5 text-sm outline-none focus:border-[#E98200]">
+                                            <option value="">Bitte auswählen</option>
+                                            @foreach (var option in PlatformOptions)
+                                            {
+                                                <option value="@option">@option</option>
+                                            }
+                                        </InputSelect>
+                                    </div>
+                                    @if (currentLead.LocomotivePlatform == OtherPlatformOption)
+                                    {
+                                        <div>
+                                            <label for="lead-other-platform" class="block text-xs font-medium text-[#62728B]">Sonstige Baureihe / Plattform</label>
+                                            <InputText id="lead-other-platform" @bind-Value="currentLead.OtherPlatform" maxlength="250" class="mt-1.5 w-full rounded-md border border-[#D9DFE7] px-3 py-2.5 text-sm outline-none focus:border-[#E98200]" />
+                                        </div>
+                                    }
+                                </div>
+                                <fieldset class="mt-5">
+                                    <legend class="text-xs font-medium text-[#62728B]">Erforderliche Länderpakete / Korridore</legend>
+                                    <div class="mt-2 grid gap-2 sm:grid-cols-2">
+                                        @foreach (var option in CorridorOptions)
+                                        {
+                                            <label @key="option" class="flex cursor-pointer items-start gap-2 rounded border border-[#E4E8EE] px-3 py-2.5 text-xs text-[#40536D]">
+                                                <input type="checkbox" checked="@currentLead.Corridors.Contains(option)" @onchange="() => ToggleValue(currentLead.Corridors, option)" class="mt-0.5 size-4 shrink-0 accent-[#E98200]" />
+                                                <span>@option</span>
+                                            </label>
+                                        }
+                                    </div>
+                                </fieldset>
+                                <fieldset class="mt-5">
+                                    <legend class="text-xs font-medium text-[#62728B]">Zugsicherungssysteme</legend>
+                                    <div class="mt-2 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                                        @foreach (var option in SafetySystemOptions)
+                                        {
+                                            <label @key="option" class="flex cursor-pointer items-start gap-2 rounded border border-[#E4E8EE] px-3 py-2.5 text-xs text-[#40536D]">
+                                                <input type="checkbox" checked="@currentLead.SafetySystems.Contains(option)" @onchange="() => ToggleValue(currentLead.SafetySystems, option)" class="mt-0.5 size-4 shrink-0 accent-[#E98200]" />
+                                                <span>@option</span>
+                                            </label>
+                                        }
+                                    </div>
+                                </fieldset>
+                                <fieldset class="mt-5">
+                                    <legend class="text-xs font-medium text-[#62728B]">Zusatzfeatures</legend>
+                                    <div class="mt-2 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                                        <label class="flex cursor-pointer items-start gap-2 rounded border border-[#E4E8EE] px-3 py-2.5 text-xs text-[#40536D]"><InputCheckbox @bind-Value="currentLead.RadioRemoteControl" class="mt-0.5 size-4 shrink-0 accent-[#E98200]" />Funkfernsteuerung</label>
+                                        <label class="flex cursor-pointer items-start gap-2 rounded border border-[#E4E8EE] px-3 py-2.5 text-xs text-[#40536D]"><InputCheckbox @bind-Value="currentLead.LastMileDiesel" class="mt-0.5 size-4 shrink-0 accent-[#E98200]" />Last-Mile-Diesel</label>
+                                        <label class="flex cursor-pointer items-start gap-2 rounded border border-[#E4E8EE] px-3 py-2.5 text-xs text-[#40536D]"><InputCheckbox @bind-Value="currentLead.MiddleCoupler" class="mt-0.5 size-4 shrink-0 accent-[#E98200]" />Mittelpufferkupplung</label>
+                                    </div>
+                                </fieldset>
+                            </section>
+                        }
                     </fieldset>
 
                     <footer class="flex flex-wrap items-center justify-between gap-3 border-t border-[#E4E8EE] pt-5">
@@ -213,78 +291,6 @@ else
                         }
                     </footer>
                 </article>
-                <aside aria-label="Technische Fahrzeug-Anforderungen" class="min-w-0 rounded-[20px] bg-white text-[#102344] shadow-xl shadow-black/10 lg:h-full lg:max-h-full lg:w-80 lg:shrink-0 lg:overflow-y-auto">
-                    <header class="border-b border-[#E4E8EE] px-5 py-5">
-                        <p class="text-[10px] font-bold uppercase tracking-[0.16em] text-[#738095]">Leadprofil</p>
-                        <h3 class="mt-1 text-sm font-semibold">Technische Anforderungen</h3>
-                    </header>
-                    <fieldset disabled="@IsViewingLead" class="space-y-5 p-5 disabled:opacity-90">
-                        <div>
-                            <label for="lead-traction" class="block text-xs font-medium text-[#62728B]">Traktionsart</label>
-                            <InputSelect id="lead-traction" @bind-Value="currentLead.TractionType" class="mt-1.5 w-full rounded-md border border-[#D9DFE7] bg-white px-3 py-2.5 text-sm outline-none focus:border-[#E98200]">
-                                <option value="">Bitte auswählen</option>
-                                @foreach (var option in TractionOptions)
-                                {
-                                    <option value="@option">@option</option>
-                                }
-                            </InputSelect>
-                        </div>
-                        <div>
-                            <label for="lead-locomotive-count" class="block text-xs font-medium text-[#62728B]">Gewünschte Anzahl an Loks</label>
-                            <InputNumber id="lead-locomotive-count" @bind-Value="currentLead.DesiredLocomotiveCount" min="1" step="1" class="mt-1.5 w-full rounded-md border border-[#D9DFE7] bg-white px-3 py-2.5 text-sm outline-none focus:border-[#E98200]" />
-                            <ValidationMessage For="() => currentLead.DesiredLocomotiveCount" class="mt-1 block text-xs text-[#A34132]" />
-                        </div>
-                        <div>
-                            <label for="lead-platform" class="block text-xs font-medium text-[#62728B]">Gewünschte Baureihe / Plattform</label>
-                            <InputSelect id="lead-platform" @bind-Value="currentLead.LocomotivePlatform" class="mt-1.5 w-full rounded-md border border-[#D9DFE7] bg-white px-3 py-2.5 text-sm outline-none focus:border-[#E98200]">
-                                <option value="">Bitte auswählen</option>
-                                @foreach (var option in PlatformOptions)
-                                {
-                                    <option value="@option">@option</option>
-                                }
-                            </InputSelect>
-                        </div>
-                        @if (currentLead.LocomotivePlatform == OtherPlatformOption)
-                        {
-                            <div>
-                                <label for="lead-other-platform" class="block text-xs font-medium text-[#62728B]">Sonstige Baureihe / Plattform</label>
-                                <InputText id="lead-other-platform" @bind-Value="currentLead.OtherPlatform" maxlength="250" class="mt-1.5 w-full rounded-md border border-[#D9DFE7] px-3 py-2.5 text-sm outline-none focus:border-[#E98200]" />
-                            </div>
-                        }
-                        <fieldset>
-                            <legend class="text-xs font-medium text-[#62728B]">Länderpakete / Korridore</legend>
-                            <div class="mt-2 grid gap-2">
-                                @foreach (var option in CorridorOptions)
-                                {
-                                    <label @key="option" class="flex cursor-pointer items-start gap-2 rounded border border-[#E4E8EE] px-3 py-2.5 text-xs text-[#40536D]">
-                                        <input type="checkbox" checked="@currentLead.Corridors.Contains(option)" @onchange="() => ToggleValue(currentLead.Corridors, option)" class="mt-0.5 size-4 shrink-0 accent-[#E98200]" />
-                                        <span>@option</span>
-                                    </label>
-                                }
-                            </div>
-                        </fieldset>
-                        <fieldset>
-                            <legend class="text-xs font-medium text-[#62728B]">Zugsicherungssysteme</legend>
-                            <div class="mt-2 grid gap-2">
-                                @foreach (var option in SafetySystemOptions)
-                                {
-                                    <label @key="option" class="flex cursor-pointer items-start gap-2 rounded border border-[#E4E8EE] px-3 py-2.5 text-xs text-[#40536D]">
-                                        <input type="checkbox" checked="@currentLead.SafetySystems.Contains(option)" @onchange="() => ToggleValue(currentLead.SafetySystems, option)" class="mt-0.5 size-4 shrink-0 accent-[#E98200]" />
-                                        <span>@option</span>
-                                    </label>
-                                }
-                            </div>
-                        </fieldset>
-                        <fieldset>
-                            <legend class="text-xs font-medium text-[#62728B]">Zusatzfeatures</legend>
-                            <div class="mt-2 grid gap-2">
-                                <label class="flex cursor-pointer items-start gap-2 rounded border border-[#E4E8EE] px-3 py-2.5 text-xs text-[#40536D]"><InputCheckbox @bind-Value="currentLead.RadioRemoteControl" class="mt-0.5 size-4 shrink-0 accent-[#E98200]" />Funkfernsteuerung</label>
-                                <label class="flex cursor-pointer items-start gap-2 rounded border border-[#E4E8EE] px-3 py-2.5 text-xs text-[#40536D]"><InputCheckbox @bind-Value="currentLead.LastMileDiesel" class="mt-0.5 size-4 shrink-0 accent-[#E98200]" />Last-Mile-Diesel</label>
-                                <label class="flex cursor-pointer items-start gap-2 rounded border border-[#E4E8EE] px-3 py-2.5 text-xs text-[#40536D]"><InputCheckbox @bind-Value="currentLead.MiddleCoupler" class="mt-0.5 size-4 shrink-0 accent-[#E98200]" />Mittelpufferkupplung</label>
-                            </div>
-                        </fieldset>
-                    </fieldset>
-                </aside>
             </EditForm>
         </main>
     </div>
@@ -355,9 +361,17 @@ else
         "Mehr als 15.000 km (Intensiver Umlauf/Personenverkehr)"
     ];
 
+    private enum LeadSection
+    {
+        BasicData,
+        ProjectDetails,
+        TechnicalRequirements
+    }
+
     private IReadOnlyList<Lead> leads = [];
     private Lead currentLead = new();
     private Lead? selectedLead;
+    private LeadSection activeLeadSection = LeadSection.BasicData;
     private string searchTerm = string.Empty;
     private string? statusMessage;
     private string? errorMessage;
@@ -388,9 +402,12 @@ else
     {
         selectedLead = null;
         currentLead = new Lead();
+        activeLeadSection = LeadSection.BasicData;
         statusMessage = null;
         errorMessage = null;
     }
+
+    private void SetLeadSection(LeadSection section) => activeLeadSection = section;
 
     private async Task SaveLeadAsync()
     {

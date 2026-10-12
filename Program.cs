@@ -8,6 +8,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 builder.Services.AddScoped<ContactService>();
+builder.Services.AddScoped<ContactActivityService>();
 builder.Services.AddScoped<RentalContractService>();
 builder.Services.AddScoped<LeadService>();
 builder.Services.AddHttpClient<SharePointDocumentService>();

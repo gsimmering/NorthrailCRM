@@ -6,73 +6,16 @@
 @using NorthrailCRM.Components.Shared
 @using Microsoft.JSInterop
 @inject ContactService ContactService
+@inject ContactActivityService ContactActivityService
 @inject SharePointDocumentService SharePointDocumentService
 @inject IJSRuntime JS
+@inject ILogger<Contacts> Logger
 
 <PageTitle>Kontakte | Northrail CRM</PageTitle>
 
 @if (isLoading)
 {
-    <div aria-busy="true" class="contacts-loading-layout grid min-h-screen bg-[#0B2140] text-white lg:h-screen lg:min-h-0 lg:overflow-hidden lg:grid-cols-[232px_350px_minmax(0,1fr)]">
-        <aside aria-hidden="true" class="hidden flex-col border-r border-white/10 bg-[#0B2140] px-5 py-7 lg:flex">
-            <div class="contacts-loading-sheen mb-12 h-5 w-36 rounded"></div>
-            <div class="contacts-loading-sheen mb-5 h-3 w-20 rounded"></div>
-            <div class="space-y-3">
-                <div class="contacts-loading-sheen h-10 rounded-full"></div>
-                <div class="contacts-loading-sheen h-10 rounded-full opacity-60"></div>
-            </div>
-            <div class="mt-auto flex items-center gap-3 border-t border-white/10 pt-5">
-                <div class="contacts-loading-sheen size-9 rounded-full"></div>
-                <div class="flex-1 space-y-2"><div class="contacts-loading-sheen h-3 w-28 rounded"></div><div class="contacts-loading-sheen h-2.5 w-20 rounded opacity-60"></div></div>
-            </div>
-        </aside>
-
-        <section aria-hidden="true" class="max-h-[55vh] min-h-[45vh] overflow-hidden border-b border-white/10 bg-[#102849] lg:h-screen lg:min-h-0 lg:max-h-screen lg:border-b-0 lg:border-r">
-            <header class="border-b border-white/10 px-6 py-6">
-                <div class="contacts-loading-sheen h-3 w-28 rounded"></div>
-                <div class="contacts-loading-sheen mt-3 h-6 w-40 rounded"></div>
-            </header>
-            <div class="border-b border-white/10 p-4">
-                <div class="contacts-loading-sheen h-10 rounded-lg"></div>
-                <div class="mt-5 flex justify-between"><div class="contacts-loading-sheen h-3 w-20 rounded"></div><div class="contacts-loading-sheen h-3 w-16 rounded"></div></div>
-            </div>
-            <div class="divide-y divide-white/10">
-                @for (var row = 0; row < 8; row++)
-                {
-                    <div class="flex items-start gap-3 px-5 py-4">
-                        <div class="contacts-loading-sheen size-10 shrink-0 rounded-full"></div>
-                        <div class="min-w-0 flex-1 space-y-2.5 pt-1"><div class="contacts-loading-sheen h-3.5 w-3/4 rounded"></div><div class="contacts-loading-sheen h-3 w-1/2 rounded opacity-60"></div></div>
-                    </div>
-                }
-            </div>
-        </section>
-
-        <main aria-hidden="true" class="flex min-w-0 gap-3 bg-[#0B2140] p-3 sm:p-6 lg:min-h-0 lg:overflow-hidden lg:p-8">
-            <div class="crm-contact-card contacts-loading-card mx-auto flex min-h-0 min-w-0 max-h-[calc(100vh-2.5rem)] flex-1 gap-6 overflow-hidden rounded-[26px] bg-white p-6 shadow-xl sm:p-10 lg:h-full lg:max-h-full lg:p-12">
-                <div class="min-w-0 flex-1">
-                    <div class="flex items-center gap-5 border-b border-[#E4E8EE] pb-8">
-                        <div class="contacts-loading-sheen-light size-16 shrink-0 rounded-2xl"></div>
-                        <div class="min-w-0 flex-1 space-y-3"><div class="contacts-loading-sheen-light h-3 w-24 rounded"></div><div class="contacts-loading-sheen-light h-6 w-2/3 rounded"></div><div class="contacts-loading-sheen-light h-3.5 w-1/2 rounded"></div></div>
-                    </div>
-                    <div class="mt-8 border-t border-[#E4E8EE] pt-8">
-                        <div class="contacts-loading-sheen-light h-4 w-44 rounded"></div>
-                        <div class="mt-6 grid gap-6 sm:grid-cols-2">
-                            @for (var field = 0; field < 5; field++)
-                            {
-                                <div class="space-y-2"><div class="contacts-loading-sheen-light h-3 w-20 rounded"></div><div class="contacts-loading-sheen-light h-4 w-32 rounded"></div></div>
-                            }
-                        </div>
-                        <div class="mt-8 border-t border-[#E4E8EE] pt-7"><div class="contacts-loading-sheen-light h-4 w-24 rounded"></div><div class="contacts-loading-sheen-light mt-5 h-3.5 w-full rounded"></div><div class="contacts-loading-sheen-light mt-3 h-3.5 w-3/4 rounded"></div></div>
-                    </div>
-                </div>
-                <div class="hidden w-80 shrink-0 gap-2 lg:flex">
-                    <div class="contacts-loading-sheen-light flex-1 rounded-[26px]"></div>
-                    <div class="flex w-12 flex-col gap-2 border-l border-white/10 bg-[#102849] p-1"><div class="contacts-loading-sheen size-10 rounded"></div><div class="contacts-loading-sheen size-10 rounded opacity-60"></div></div>
-                </div>
-            </div>
-            <p role="status" class="sr-only">Kontakte werden geladen.</p>
-        </main>
-    </div>
+    <div role="status" class="grid min-h-screen place-items-center bg-[#0B2140] text-sm text-white/60">Kontakte werden geladen ...</div>
 }
 else
 {
@@ -81,24 +24,27 @@ else
 
         <section class="crm-contact-list max-h-[55vh] min-h-[45vh] overflow-y-auto border-b border-white/10 bg-[#102849] lg:h-screen lg:min-h-0 lg:max-h-screen lg:border-b-0 lg:border-r">
             <div class="sticky top-0 z-10 bg-[#102849]">
-            <header class="flex items-center justify-between border-b border-white/10 px-6 py-6">
-                <div>
-                    <p class="text-xs font-medium uppercase tracking-[0.16em] text-[#FF9A2E]">CRM / Kontakte</p>
-                    <h1 class="mt-1 text-xl font-semibold tracking-tight text-white">Kontakte <span class="ml-1 text-sm font-normal text-white/45">@contacts.Count</span></h1>
+                <header class="flex items-center justify-between border-b border-white/10 px-6 py-6">
+                    <div>
+                        <p class="text-xs font-medium uppercase tracking-[0.16em] text-[#FF9A2E]">CRM / Kontakte</p>
+                        <h1 class="mt-1 text-xl font-semibold tracking-tight text-white">Kontakte <span class="ml-1 text-sm font-normal text-white/45">@contacts.Count</span></h1>
+                    </div>
+                </header>
+                <div class="border-b border-white/10 p-4">
+                    <label class="flex items-center gap-2.5 rounded-lg border border-white/15 bg-[#0B2140] px-3 py-2.5 focus-within:border-[#FF8C1A]">
+                        <svg class="size-4 shrink-0 text-white/45" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m16 16 4 4"/></svg>
+                        <input @bind="searchTerm" @bind:event="oninput" @bind:after="EnsureFilteredSelection" @onkeydown="HandleSearchKeyDown" placeholder="Name, Firma oder E-Mail suchen" class="w-full bg-transparent text-sm text-white outline-none placeholder:text-white/40" />
+                        <kbd class="hidden rounded border border-white/20 px-1.5 py-0.5 text-[10px] text-white/45 sm:inline">⌘ K</kbd>
+                    </label>
+                    <div role="group" aria-label="Kontakte filtern" class="mt-3 grid grid-cols-2 gap-0.5 rounded-md border border-white/10 bg-white/[0.03] p-0.5">
+                        <button type="button" @onclick="() => SetCustomerFilter(true)" aria-pressed="@showOnlyRentalTenants" class="rounded px-2.5 py-1.5 text-[11px] font-medium transition-colors @(showOnlyRentalTenants ? "bg-white/10 text-white/90" : "text-white/50 hover:text-white/80")">Kunden</button>
+                        <button type="button" @onclick="() => SetCustomerFilter(false)" aria-pressed="@(!showOnlyRentalTenants)" class="rounded px-2.5 py-1.5 text-[11px] font-medium transition-colors @(!showOnlyRentalTenants ? "bg-white/10 text-white/90" : "text-white/50 hover:text-white/80")">Alle</button>
+                    </div>
+                    <div class="mt-4 flex items-center justify-between text-xs">
+                        <span class="font-medium text-white/70">@(showOnlyRentalTenants ? "Kunden" : "Alle Kontakte")</span>
+                        <span class="text-white/45">@FilteredContacts.Count() Ergebnisse</span>
+                    </div>
                 </div>
-            </header>
-
-            <div class="border-b border-white/10 p-4">
-                <label class="flex items-center gap-2.5 rounded-lg border border-white/15 bg-[#0B2140] px-3 py-2.5 focus-within:border-[#FF8C1A]">
-                    <svg class="size-4 shrink-0 text-white/45" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m16 16 4 4"/></svg>
-                    <input @bind="searchTerm" @bind:event="oninput" @bind:after="EnsureFilteredSelection" @onkeydown="HandleSearchKeyDown" placeholder="Name, Firma oder E-Mail suchen" class="w-full bg-transparent text-sm text-white outline-none placeholder:text-white/40" />
-                    <kbd class="hidden rounded border border-white/20 px-1.5 py-0.5 text-[10px] text-white/45 sm:inline">⌘ K</kbd>
-                </label>
-                <div class="mt-4 flex items-center justify-between text-xs">
-                    <span class="font-medium text-white/70">Alle Kontakte</span>
-                    <span class="text-white/45">@FilteredContacts.Count() Ergebnisse</span>
-                </div>
-            </div>
             </div>
 
             <div @ref="contactList" role="listbox" aria-label="Kontakte" class="divide-y divide-white/10">
@@ -129,31 +75,31 @@ else
         <main class="relative flex min-w-0 bg-[#0B2140] p-3 sm:p-6 lg:min-h-0 lg:overflow-hidden lg:p-8">
             @if (SelectedContact is not null)
             {
-                <div class="flex min-h-0 min-w-0 flex-1 gap-3 lg:h-full">
-                    <div class="crm-contact-card min-h-0 min-w-0 max-h-[calc(100vh-2.5rem)] flex-1 overflow-y-auto rounded-[26px] bg-white px-6 py-8 text-[#102344] shadow-xl shadow-black/10 sm:px-10 lg:h-full lg:max-h-full lg:px-14 lg:py-12">
-                        <div class="flex flex-wrap items-start justify-between gap-5 border-b border-[#E4E8EE] pb-8">
-                            <div class="flex items-center gap-5">
-                                <span class="grid size-16 place-items-center rounded-2xl bg-[#0B2140] text-xl font-semibold text-[#FF9A2E]">@Initials(SelectedContact)</span>
-                                <div>
-                                    <p class="text-xs font-medium uppercase tracking-[0.16em] text-[#E98200]">Kontaktprofil</p>
-                                    <h2 class="mt-1 text-2xl font-semibold tracking-tight text-[#102344]">@SelectedContact.DisplayName</h2>
-                                    <p class="mt-1 text-sm text-[#62728B]">@SelectedContact.Subtitle</p>
-                                </div>
-                            </div>
-                        </div>
+                <div class="relative flex min-h-0 min-w-0 flex-1 gap-2 lg:h-full">
+                <article class="crm-contact-card mx-auto flex min-h-0 min-w-0 max-h-[calc(100vh-2.5rem)] flex-1 flex-col overflow-hidden rounded-[26px] bg-white text-[#102344] shadow-xl shadow-black/10 lg:h-full lg:max-h-full">
+                    <header class="shrink-0 border-b border-[#E4E8EE] px-6 py-5 sm:px-10 lg:px-12">
+                        <h2 class="truncate text-xl font-semibold tracking-tight text-[#102344] sm:text-2xl">@SelectedContact.DisplayName</h2>
+                    </header>
 
-                        <div class="mt-4 pt-4">
+                    <nav role="tablist" aria-label="Kontaktbereiche" class="flex shrink-0 gap-1 overflow-x-auto border-b border-[#E4E8EE] px-4 sm:px-8 lg:px-10">
+                        <button @onclick="() => SetContactPanelAsync(ContactPanel.MasterData)" type="button" role="tab" aria-selected="@(activeContactPanel == ContactPanel.MasterData)" class="whitespace-nowrap border-b-2 px-4 py-3 text-sm font-medium transition-colors @(activeContactPanel == ContactPanel.MasterData ? "border-[#E98200] text-[#B96600]" : "border-transparent text-[#738095] hover:text-[#40536D]")">Stammdaten</button>
+                        <button @onclick="() => SetContactPanelAsync(ContactPanel.People)" type="button" role="tab" aria-selected="@(activeContactPanel == ContactPanel.People)" class="whitespace-nowrap border-b-2 px-4 py-3 text-sm font-medium transition-colors @(activeContactPanel == ContactPanel.People ? "border-[#E98200] text-[#B96600]" : "border-transparent text-[#738095] hover:text-[#40536D]")">Personen <span class="ml-1 text-xs text-[#AAB3BF]">@SelectedContact.Persons.Count</span></button>
+                        <button @onclick="() => SetContactPanelAsync(ContactPanel.Documents)" type="button" role="tab" aria-selected="@(activeContactPanel == ContactPanel.Documents)" class="whitespace-nowrap border-b-2 px-4 py-3 text-sm font-medium transition-colors @(activeContactPanel == ContactPanel.Documents ? "border-[#E98200] text-[#B96600]" : "border-transparent text-[#738095] hover:text-[#40536D]")">Dokumente <span class="ml-1 text-xs text-[#AAB3BF]">@DocumentCount</span></button>
+                    </nav>
+
+                    <div role="tabpanel" class="min-h-0 flex-1 overflow-y-auto px-6 py-6 sm:px-10 lg:px-12">
+                        @if (activeContactPanel == ContactPanel.MasterData)
+                        {
                             <section class="pb-8">
                                 <h3 class="text-sm font-semibold text-[#102344]">Kontaktinformationen</h3>
                                 <div class="mt-5 grid gap-x-10 gap-y-6 sm:grid-cols-2">
-                                    <div><p class="text-xs text-[#738095]">E-Mail-Adresse</p><a class="mt-1.5 block break-all text-sm text-[#E98200] hover:text-[#BE6800]" href="mailto:@SelectedContact.Email">@SelectedContact.Email</a></div>
-                                    <div><p class="text-xs text-[#738095]">Telefon</p><a class="mt-1.5 block text-sm text-[#213852] hover:text-[#E98200]" href="tel:@SelectedContact.PhoneNumber">@SelectedContact.PhoneNumber</a></div>
-                                    <div><p class="text-xs text-[#738095]">Unternehmen</p><p class="mt-1.5 text-sm text-[#213852]">@SelectedContact.Company</p></div>
+                                    <div><p class="text-xs text-[#738095]">E-Mail-Adresse</p><a class="mt-1.5 block break-all text-sm text-[#E98200] hover:text-[#BE6800]" href="mailto:@SelectedContact.Email">@DisplayOrFallback(SelectedContact.Email)</a></div>
+                                    <div><p class="text-xs text-[#738095]">Telefon</p><a class="mt-1.5 block text-sm text-[#213852] hover:text-[#E98200]" href="tel:@SelectedContact.PhoneNumber">@DisplayOrFallback(SelectedContact.PhoneNumber)</a></div>
+                                    <div><p class="text-xs text-[#738095]">Unternehmen</p><p class="mt-1.5 text-sm text-[#213852]">@DisplayOrFallback(SelectedContact.Company)</p></div>
                                     <div><p class="text-xs text-[#738095]">Kontaktart</p><p class="mt-1.5 text-sm text-[#213852]">@(SelectedContact.IsCustomer && SelectedContact.IsSupplier ? "Kunde · Lieferant" : SelectedContact.IsCustomer ? "Kunde" : SelectedContact.IsSupplier ? "Lieferant" : "Kontakt")</p></div>
-                                    <div class="sm:col-span-2"><p class="text-xs text-[#738095]">Anschrift</p><p class="mt-1.5 text-sm text-[#213852]">@SelectedContact.Address</p></div>
+                                    <div class="sm:col-span-2"><p class="text-xs text-[#738095]">Anschrift</p><p class="mt-1.5 text-sm text-[#213852]">@DisplayOrFallback(SelectedContact.Address)</p></div>
                                 </div>
                             </section>
-
                             <section class="border-t border-[#E4E8EE] py-7">
                                 <div class="flex items-center justify-between">
                                     <h3 class="text-sm font-semibold text-[#102344]">Notizen</h3>
@@ -161,195 +107,391 @@ else
                                 </div>
                                 <p class="mt-4 whitespace-pre-wrap text-sm leading-6 text-[#40536D]">@(string.IsNullOrWhiteSpace(SelectedContact.Notes) ? "Noch keine Notizen zu diesem Kontakt." : SelectedContact.Notes)</p>
                             </section>
-
-                            <section class="border-t border-[#E4E8EE] py-7">
-                                <h3 class="text-sm font-semibold text-[#102344]">Letzte Aktivität</h3>
-                                <div class="mt-5 flex gap-3">
-                                    <span class="mt-1.5 size-2 shrink-0 rounded-full bg-[#FF8C1A] ring-4 ring-[#FF8C1A]/15"></span>
-                                    <div><p class="text-sm text-[#213852]">Kontakt zum CRM hinzugefügt</p><p class="mt-1 text-xs text-[#738095]">Northrail Workspace</p></div>
-                                </div>
-                            </section>
-                        </div>
-                    </div>
-
-                    <div @ref="contactPanelHost" class="relative flex min-h-0 shrink-0">
-                        @if (activeContactPanel is not null)
+                        }
+                        else if (activeContactPanel == ContactPanel.People)
                         {
-                            <div data-contact-panel-splitter role="separator" aria-orientation="vertical" aria-label="Breite des Kontaktbereichs anpassen" aria-valuemin="260" aria-valuemax="520" aria-valuenow="320" tabindex="0" class="group hidden w-2 shrink-0 cursor-col-resize items-center justify-center rounded-full outline-none hover:bg-white/5 focus-visible:bg-white/10 lg:flex" title="Ziehen, um die Breite anzupassen">
-                                <span class="h-10 w-1 rounded-full bg-white/25 transition-colors group-hover:bg-[#FF9A2E] group-focus-visible:bg-[#FF9A2E]"></span>
-                            </div>
-                            <aside data-contact-panel aria-label="@(activeContactPanel == ContactPanel.People ? "Personen" : "Dokumente")" class="absolute inset-y-0 right-12 z-30 flex w-72 max-w-[calc(100vw-4rem)] flex-col overflow-hidden rounded-[26px] border border-[#D9DFE7] bg-white text-[#102344] shadow-xl lg:static lg:z-auto lg:h-full lg:w-80 lg:shrink-0 lg:shadow-lg">
-                                <header class="flex items-center justify-between gap-3 border-b border-[#E4E8EE] px-4 py-4">
-                                    <div class="min-w-0">
-                                        <p class="text-[10px] font-bold uppercase tracking-[0.16em] text-[#738095]">Kontaktbereich</p>
-                                        @if (activeContactPanel == ContactPanel.People)
-                                        {
-                                            <h3 class="mt-1 truncate text-sm font-semibold">Personen <span class="ml-1 font-normal text-[#738095]">@SelectedContact.Persons.Count</span></h3>
-                                        }
-                                        else
-                                        {
-                                            <h3 class="mt-1 text-sm font-semibold">Dokumente <span class="ml-1 font-normal text-[#738095]">@DocumentCount</span></h3>
-                                        }
-                                    </div>
-                                    <button @onclick="CloseContactPanel" type="button" aria-label="Seitenbereich schließen" title="Seitenbereich schließen" class="grid size-8 shrink-0 place-items-center rounded text-[#62728B] hover:bg-[#EEF0F3] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#E98200]">
-                                        <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18" /></svg>
-                                    </button>
-                                </header>
-
-                                @if (activeContactPanel == ContactPanel.Documents && documentBreadcrumb.Count > 0)
+                            <section>
+                                <h3 class="text-sm font-semibold text-[#102344]">Zugeordnete Personen</h3>
+                                @if (SelectedContact.Persons.Count == 0)
                                 {
-                                    <nav aria-label="SharePoint-Pfad" class="flex flex-wrap items-center gap-1.5 border-b border-[#E4E8EE] px-4 py-3 text-xs">
-                                        <span class="font-medium text-[#738095]">Kunden</span>
-                                        @for (var breadcrumbIndex = 0; breadcrumbIndex < documentBreadcrumb.Count; breadcrumbIndex++)
-                                        {
-                                            var crumbIndex = breadcrumbIndex;
-                                            var crumb = documentBreadcrumb[crumbIndex];
-                                            <svg class="size-3 shrink-0 text-[#AAB3BF]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m9 18 6-6-6-6" /></svg>
-                                            @if (crumbIndex == documentBreadcrumb.Count - 1)
-                                            {
-                                                <span aria-current="page" class="max-w-36 truncate font-semibold text-[#213852]">@crumb.Name</span>
-                                            }
-                                            else
-                                            {
-                                                <button @onclick="() => NavigateToDocumentBreadcrumbAsync(crumbIndex)" type="button" disabled="@documentsLoading" class="max-w-36 truncate text-[#E98200] hover:text-[#BE6800] disabled:opacity-50">@crumb.Name</button>
-                                            }
-                                        }
-                                    </nav>
+                                    <p class="mt-4 text-sm text-[#738095]">Keine Personen zugeordnet.</p>
                                 }
-
-                                <div class="min-h-0 flex-1 overflow-y-auto px-4 py-2">
-                                    @if (activeContactPanel == ContactPanel.People)
-                                    {
-                                        @if (SelectedContact.Persons.Count == 0)
+                                else
+                                {
+                                    <div class="mt-3 divide-y divide-[#E4E8EE]">
+                                        @foreach (var person in SelectedContact.Persons)
                                         {
-                                            <p class="py-3 text-sm text-[#738095]">Keine Personen zugeordnet.</p>
-                                        }
-                                        else
-                                        {
-                                            <div class="divide-y divide-[#E4E8EE]">
-                                                @foreach (var person in SelectedContact.Persons)
+                                            <div @key="person.Number" class="py-4">
+                                                <p class="text-sm font-medium text-[#213852]">@person.DisplayName</p>
+                                                @if (!string.IsNullOrWhiteSpace(person.JobTitle))
                                                 {
-                                                    <div @key="person.Number" class="py-3">
-                                                        <p class="text-sm font-medium text-[#213852]">@person.DisplayName</p>
-                                                        @if (!string.IsNullOrWhiteSpace(person.JobTitle))
-                                                        {
-                                                            <p class="mt-1 text-xs text-[#738095]">@person.JobTitle</p>
-                                                        }
-                                                        @if (!string.IsNullOrWhiteSpace(person.Email))
-                                                        {
-                                                            <a class="mt-2 block break-all text-xs text-[#E98200] hover:text-[#BE6800]" href="mailto:@person.Email">@person.Email</a>
-                                                        }
-                                                        @if (!string.IsNullOrWhiteSpace(person.PhoneNumber))
-                                                        {
-                                                            <a class="mt-1 block text-xs text-[#213852] hover:text-[#E98200]" href="tel:@person.PhoneNumber">@person.PhoneNumber</a>
-                                                        }
-                                                    </div>
+                                                    <p class="mt-1 text-xs text-[#738095]">@person.JobTitle</p>
+                                                }
+                                                @if (!string.IsNullOrWhiteSpace(person.Email))
+                                                {
+                                                    <a class="mt-2 block break-all text-xs text-[#E98200] hover:text-[#BE6800]" href="mailto:@person.Email">@person.Email</a>
+                                                }
+                                                @if (!string.IsNullOrWhiteSpace(person.PhoneNumber))
+                                                {
+                                                    <a class="mt-1 block text-xs text-[#213852] hover:text-[#E98200]" href="tel:@person.PhoneNumber">@person.PhoneNumber</a>
                                                 }
                                             </div>
                                         }
-                                    }
-                                    else
+                                    </div>
+                                }
+                            </section>
+                        }
+                        else if (activeContactPanel == ContactPanel.Documents)
+                        {
+                            @if (documentBreadcrumb.Count > 0)
+                            {
+                                <nav aria-label="SharePoint-Pfad" class="mb-4 flex flex-wrap items-center gap-1.5 border-b border-[#E4E8EE] pb-3 text-xs">
+                                    <span class="font-medium text-[#738095]">Kunden</span>
+                                    @for (var breadcrumbIndex = 0; breadcrumbIndex < documentBreadcrumb.Count; breadcrumbIndex++)
                                     {
-                                        @if (documentsLoading)
+                                        var crumbIndex = breadcrumbIndex;
+                                        var crumb = documentBreadcrumb[crumbIndex];
+                                        <svg class="size-3 shrink-0 text-[#AAB3BF]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m9 18 6-6-6-6" /></svg>
+                                        @if (crumbIndex == documentBreadcrumb.Count - 1)
                                         {
-                                            <p role="status" class="py-3 text-sm text-[#738095]">SharePoint-Dokumente werden geladen ...</p>
-                                        }
-                                        else if (documentsError is not null)
-                                        {
-                                            <p role="alert" class="py-3 text-sm text-[#A34132]">@documentsError</p>
-                                        }
-                                        else if (documentItems.Count == 0)
-                                        {
-                                            <p class="py-3 text-sm text-[#738095]">Der Kundenordner enthält keine Dokumente oder Unterordner.</p>
+                                            <span aria-current="page" class="max-w-36 truncate font-semibold text-[#213852]">@crumb.Name</span>
                                         }
                                         else
                                         {
-                                            <ul class="divide-y divide-[#E4E8EE]">
-                                                @foreach (var item in documentItems)
-                                                {
-                                                    <li @key="item.Id" class="py-2">
-                                                        @if (item.IsFolder)
-                                                        {
-                                                            <button @onclick="() => OpenSharePointFolderAsync(item)" type="button" disabled="@documentsLoading" class="flex w-full items-center justify-between gap-2 text-left text-sm text-[#213852] hover:text-[#BE6800] disabled:opacity-50">
-                                                                <span class="min-w-0 break-words">@item.Name</span>
-                                                                <span class="shrink-0 text-[10px] text-[#738095]">Ordner ›</span>
-                                                            </button>
-                                                        }
-                                                        else
-                                                        {
-                                                            <a href="@item.WebUrl" target="_blank" rel="noopener noreferrer" class="block break-words text-sm text-[#E98200] hover:text-[#BE6800]" title="In SharePoint öffnen">@item.Name</a>
-                                                            <span class="text-[10px] text-[#738095]">Datei</span>
-                                                        }
-                                                    </li>
-                                                }
-                                            </ul>
+                                            <button @onclick="() => NavigateToDocumentBreadcrumbAsync(crumbIndex)" type="button" disabled="@documentsLoading" class="max-w-36 truncate text-[#E98200] hover:text-[#BE6800] disabled:opacity-50">@crumb.Name</button>
                                         }
                                     }
-                                </div>
-                            </aside>
+                                </nav>
+                            }
+                            @if (documentsLoading)
+                            {
+                                <p role="status" class="py-3 text-sm text-[#738095]">SharePoint-Dokumente werden geladen ...</p>
+                            }
+                            else if (documentsError is not null)
+                            {
+                                <p role="alert" class="py-3 text-sm text-[#A34132]">@documentsError</p>
+                            }
+                            else if (documentItems.Count == 0)
+                            {
+                                <p class="py-3 text-sm text-[#738095]">Der Kundenordner enthält keine Dokumente oder Unterordner.</p>
+                            }
+                            else
+                            {
+                                <ul class="divide-y divide-[#E4E8EE]">
+                                    @foreach (var item in documentItems)
+                                    {
+                                        <li @key="item.Id" class="py-3">
+                                            @if (item.IsFolder)
+                                            {
+                                                <button @onclick="() => OpenSharePointFolderAsync(item)" type="button" disabled="@documentsLoading" class="flex w-full items-center justify-between gap-2 text-left text-sm text-[#213852] hover:text-[#BE6800] disabled:opacity-50">
+                                                    <span class="min-w-0 break-words">@item.Name</span>
+                                                    <span class="shrink-0 text-[10px] text-[#738095]">Ordner ›</span>
+                                                </button>
+                                            }
+                                            else
+                                            {
+                                                <a href="@item.WebUrl" target="_blank" rel="noopener noreferrer" class="block break-words text-sm text-[#E98200] hover:text-[#BE6800]" title="In SharePoint öffnen">@item.Name</a>
+                                                <span class="text-[10px] text-[#738095]">Datei</span>
+                                            }
+                                        </li>
+                                    }
+                                </ul>
+                            }
                         }
-
-                        <nav aria-label="Kontaktbereiche" class="relative z-20 flex w-12 shrink-0 flex-col gap-1 border-l border-white/10 bg-[#102849] p-1">
-                            <button @onclick="() => ToggleContactPanel(ContactPanel.People)" type="button" aria-label="Personen" title="Personen" aria-pressed="@(activeContactPanel == ContactPanel.People)" class="grid size-10 place-items-center rounded-sm transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[#FF8C1A] @(activeContactPanel == ContactPanel.People ? "bg-white/10 text-[#FFB45C]" : "text-white/55 hover:bg-white/5 hover:text-white")">
-                                <svg class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><circle cx="9" cy="8" r="3" /><path d="M3.5 19v-1a5.5 5.5 0 0 1 11 0v1zM16 5.5a3 3 0 0 1 0 5.8M18 14a4 4 0 0 1 2.5 3.7V19h-3" /></svg>
-                            </button>
-                            <button @onclick="() => ToggleContactPanel(ContactPanel.Documents)" type="button" aria-label="Dokumente" title="Dokumente" aria-pressed="@(activeContactPanel == ContactPanel.Documents)" class="grid size-10 place-items-center rounded-sm transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[#FF8C1A] @(activeContactPanel == ContactPanel.Documents ? "bg-white/10 text-[#FFB45C]" : "text-white/55 hover:bg-white/5 hover:text-white")">
-                                <svg class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M3.5 6.5h6l2 2h9v9a2 2 0 0 1-2 2h-13a2 2 0 0 1-2-2z" /><path d="M3.5 8.5V5a2 2 0 0 1 2-2h4l2 2h7a2 2 0 0 1 2 2v1.5" /></svg>
-                            </button>
-                        </nav>
+                        else
+                        {
+                            <nav role="tablist" aria-label="Aktivitätstypen" class="mb-5 flex gap-1 overflow-x-auto border-b border-[#E4E8EE]">
+                                @foreach (var type in ActivityTypeTabs)
+                                {
+                                    var typeCount = contactActivities.Count(activity => activity.TypeNumber == type.Number);
+                                    <button @onclick="() => SelectActivityTypeAsync(type)" type="button" role="tab" aria-selected="@(activeActivityTypeNumber == type.Number)" class="whitespace-nowrap border-b-2 px-3 py-3 text-sm font-medium transition-colors @(activeActivityTypeNumber == type.Number ? "border-[#E98200] text-[#B96600]" : "border-transparent text-[#738095] hover:text-[#40536D]")">@type.Name <span class="ml-1 text-xs text-[#AAB3BF]">@typeCount</span></button>
+                                }
+                            </nav>
+                            <div class="mb-5 flex flex-wrap items-center justify-between gap-3">
+                                <div>
+                                    <h3 class="text-sm font-semibold text-[#102344]">@(ActivityTypeTabs.FirstOrDefault(type => type.Number == activeActivityTypeNumber)?.Name ?? "Aktivitäten")</h3>
+                                    <p class="mt-1 text-xs text-[#738095]">@FilteredActivities.Count() Einträge</p>
+                                </div>
+                                <button @onclick="BeginNewActivity" type="button" disabled="@activitiesLoading" class="inline-flex items-center gap-2 rounded-md bg-[#E98200] px-3 py-2 text-sm font-medium text-white hover:bg-[#C86F00] disabled:cursor-wait disabled:opacity-50">
+                                    <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>
+                                    Aktivität hinzufügen
+                                </button>
+                            </div>
+                            @if (activityEditorOpen)
+                            {
+                                <EditForm Model="activityDraft" OnValidSubmit="SaveActivityAsync" class="mb-6 rounded-lg border border-[#D9DFE7] p-4">
+                                    <div class="grid gap-4 sm:grid-cols-2">
+                                        <div>
+                                            <label for="activity-date" class="block text-xs font-medium text-[#62728B]">Datum</label>
+                                            <input id="activity-date" type="date" value="@activityDateInput" @onchange="UpdateActivityDate" class="mt-1.5 w-full rounded-md border border-[#D9DFE7] bg-white px-3 py-2.5 text-sm outline-none focus:border-[#E98200]" />
+                                        </div>
+                                        <div>
+                                            <label for="activity-time" class="block text-xs font-medium text-[#62728B]">Uhrzeit</label>
+                                            <select id="activity-time" value="@activityTimeInput" @onchange="UpdateActivityTime" class="mt-1.5 w-full rounded-md border border-[#D9DFE7] bg-white px-3 py-2.5 text-sm outline-none focus:border-[#E98200]">
+                                                <option value="">Bitte auswählen</option>
+                                                @if (!string.IsNullOrEmpty(activityTimeInput) && !QuarterHourOptions.Contains(activityTimeInput))
+                                                {
+                                                    <option value="@activityTimeInput">@activityTimeInput (bestehende Uhrzeit)</option>
+                                                }
+                                                @foreach (var time in QuarterHourOptions)
+                                                {
+                                                    <option value="@time">@time</option>
+                                                }
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label for="activity-person" class="block text-xs font-medium text-[#62728B]">Person des Kontakts</label>
+                                            <InputSelect TValue="int?" id="activity-person" @bind-Value="activityDraft.PersonNumber" class="mt-1.5 w-full rounded-md border border-[#D9DFE7] bg-white px-3 py-2.5 text-sm outline-none focus:border-[#E98200]">
+                                                <option value="">Keine Zuordnung</option>
+                                                @foreach (var person in activityAssociations.People)
+                                                {
+                                                    <option value="@person.Number">@person.Name</option>
+                                                }
+                                            </InputSelect>
+                                        </div>
+                                        <div>
+                                            <label for="activity-employee" class="block text-xs font-medium text-[#62728B]">Ersteller</label>
+                                            <InputSelect TValue="int?" id="activity-employee" @bind-Value="activityDraft.EmployeeNumber" class="mt-1.5 w-full rounded-md border border-[#D9DFE7] bg-white px-3 py-2.5 text-sm outline-none focus:border-[#E98200]">
+                                                <option value="">Keine Zuordnung</option>
+                                                @foreach (var employee in activityAssociations.Employees)
+                                                {
+                                                    <option value="@employee.Number">@employee.Name</option>
+                                                }
+                                            </InputSelect>
+                                        </div>
+                                        <div>
+                                            <label for="activity-assigned-employee" class="block text-xs font-medium text-[#62728B]">Zugewiesen an</label>
+                                            <InputSelect TValue="int?" id="activity-assigned-employee" @bind-Value="activityDraft.AssignedEmployeeNumber" class="mt-1.5 w-full rounded-md border border-[#D9DFE7] bg-white px-3 py-2.5 text-sm outline-none focus:border-[#E98200]">
+                                                <option value="">Keine Zuordnung</option>
+                                                @foreach (var employee in activityAssociations.Employees)
+                                                {
+                                                    <option value="@employee.Number">@employee.Name</option>
+                                                }
+                                            </InputSelect>
+                                        </div>
+                                        <div>
+                                            <label for="activity-gattung" class="block text-xs font-medium text-[#62728B]">Gattung</label>
+                                            <InputSelect TValue="int?" id="activity-gattung" @bind-Value="activityDraft.VehicleGattungNumber" class="mt-1.5 w-full rounded-md border border-[#D9DFE7] bg-white px-3 py-2.5 text-sm outline-none focus:border-[#E98200]">
+                                                <option value="">Keine Zuordnung</option>
+                                                @foreach (var gattung in activityAssociations.VehicleGattungen)
+                                                {
+                                                    <option value="@gattung.Number">@gattung.Name</option>
+                                                }
+                                            </InputSelect>
+                                        </div>
+                                        <div>
+                                            <label for="activity-vehicle" class="block text-xs font-medium text-[#62728B]">Fahrzeug</label>
+                                            <InputSelect TValue="int?" id="activity-vehicle" @bind-Value="activityDraft.VehicleNumber" class="mt-1.5 w-full rounded-md border border-[#D9DFE7] bg-white px-3 py-2.5 text-sm outline-none focus:border-[#E98200]">
+                                                <option value="">Keine Zuordnung</option>
+                                                @foreach (var vehicle in activityAssociations.Vehicles)
+                                                {
+                                                    <option value="@vehicle.Number">@vehicle.Name</option>
+                                                }
+                                            </InputSelect>
+                                        </div>
+                                        <div>
+                                            <label for="activity-contract" class="block text-xs font-medium text-[#62728B]">Mietvertrag</label>
+                                            <InputSelect TValue="int?" id="activity-contract" @bind-Value="activityDraft.RentalContractNumber" class="mt-1.5 w-full rounded-md border border-[#D9DFE7] bg-white px-3 py-2.5 text-sm outline-none focus:border-[#E98200]">
+                                                <option value="">Keine Zuordnung</option>
+                                                @foreach (var contract in activityAssociations.RentalContracts)
+                                                {
+                                                    <option value="@contract.Number">@contract.Name</option>
+                                                }
+                                            </InputSelect>
+                                        </div>
+                                        <div class="sm:col-span-2">
+                                            <label for="activity-subject" class="block text-xs font-medium text-[#62728B]">Thema</label>
+                                            <InputText id="activity-subject" @bind-Value="activityDraft.Subject" class="mt-1.5 w-full rounded-md border border-[#D9DFE7] px-3 py-2.5 text-sm outline-none focus:border-[#E98200]" />
+                                        </div>
+                                        <div class="sm:col-span-2">
+                                            <div class="flex items-center justify-between gap-3">
+                                                <label for="activity-text" class="block text-xs font-medium text-[#62728B]">Notiz</label>
+                                                <button @onclick="ToggleActivityDictationAsync" type="button" aria-label="@(isDictatingActivity ? "Spracheingabe beenden" : "Notiz diktieren")" title="@(isDictatingActivity ? "Spracheingabe beenden" : "Notiz diktieren")" class="grid size-8 place-items-center rounded text-[#62728B] hover:bg-[#EEF0F3] hover:text-[#213852] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#E98200]">
+                                                    @if (isDictatingActivity)
+                                                    {
+                                                        <svg class="size-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="6" y="6" width="12" height="12" rx="1" /></svg>
+                                                    }
+                                                    else
+                                                    {
+                                                        <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="9" y="3" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3m-4 0h8"/></svg>
+                                                    }
+                                                </button>
+                                            </div>
+                                            <InputTextArea id="activity-text" @bind-Value="activityDraft.Text" rows="3" class="mt-1.5 w-full resize-y rounded-md border border-[#D9DFE7] px-3 py-2.5 text-sm outline-none focus:border-[#E98200]" />
+                                            @if (!string.IsNullOrWhiteSpace(activitySpeechMessage))
+                                            {
+                                                <p role="status" class="mt-2 text-xs @(isDictatingActivity ? "text-[#B96600]" : "text-[#62728B]")">@activitySpeechMessage</p>
+                                            }
+                                        </div>
+                                    </div>
+                                    @if (!string.IsNullOrWhiteSpace(activityEditorError))
+                                    {
+                                        <p role="alert" class="mt-3 text-sm text-[#A34132]">@activityEditorError</p>
+                                    }
+                                    <div class="mt-4 flex flex-wrap justify-end gap-2">
+                                        <button @onclick="CancelActivityEdit" type="button" disabled="@(isSavingActivity || isDictatingActivity)" class="rounded-md border border-[#D9DFE7] px-3 py-2 text-sm text-[#40536D] hover:bg-[#F4F6F8]">Abbrechen</button>
+                                        <button type="submit" disabled="@(isSavingActivity || isDictatingActivity)" class="rounded-md bg-[#E98200] px-3 py-2 text-sm font-medium text-white hover:bg-[#C86F00] disabled:cursor-wait disabled:opacity-50">@(isSavingActivity ? "Wird gespeichert ..." : editingActivityNumber.HasValue ? "Änderungen speichern" : "Aktivität speichern")</button>
+                                    </div>
+                                </EditForm>
+                            }
+                            @if (activitiesLoading)
+                            {
+                                <p role="status" class="py-3 text-sm text-[#738095]">Aktivitäten werden geladen ...</p>
+                            }
+                            else if (activitiesError is not null)
+                            {
+                                <p role="alert" class="py-3 text-sm text-[#A34132]">@activitiesError</p>
+                            }
+                            else if (!FilteredActivities.Any())
+                            {
+                                <p class="py-3 text-sm text-[#738095]">Für diesen Kontakt gibt es in diesem Bereich keine Aktivitäten.</p>
+                            }
+                            else
+                            {
+                                <ol class="divide-y divide-[#E4E8EE]">
+                                    @foreach (var activity in FilteredActivities)
+                                    {
+                                        <li @key="activity.Number" class="py-5 first:pt-0">
+                                            <div class="flex flex-wrap items-start justify-between gap-3">
+                                                <div class="min-w-0 flex-1">
+                                                    <div class="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+                                                        <h4 class="text-sm font-semibold text-[#213852]">@activity.Type</h4>
+                                                        <time class="text-xs text-[#738095]">@(activity.ActivityDate?.ToString("dd.MM.yyyy HH:mm") ?? "Datum nicht hinterlegt")</time>
+                                                    </div>
+                                                    @if (!string.IsNullOrWhiteSpace(activity.Subject))
+                                                    {
+                                                        <p class="mt-2 text-sm font-medium text-[#213852]">@activity.Subject</p>
+                                                    }
+                                                    @if (!string.IsNullOrWhiteSpace(activity.Text))
+                                                    {
+                                                        <p class="mt-2 whitespace-pre-wrap text-sm leading-6 text-[#40536D]">@activity.Text</p>
+                                                    }
+                                                    @if (activity.PersonNumber.HasValue || activity.EmployeeNumber.HasValue || activity.AssignedEmployeeNumber.HasValue || activity.VehicleGattungNumber.HasValue || activity.VehicleNumber.HasValue || activity.RentalContractNumber.HasValue)
+                                                    {
+                                                        <div class="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-xs text-[#738095]">
+                                                            @if (activity.PersonNumber.HasValue && !string.IsNullOrWhiteSpace(activity.PersonName))
+                                                            {
+                                                                <span>Person: @activity.PersonName</span>
+                                                            }
+                                                            @if (activity.EmployeeNumber.HasValue && !string.IsNullOrWhiteSpace(activity.EmployeeName))
+                                                            {
+                                                                <span>Ersteller: @activity.EmployeeName</span>
+                                                            }
+                                                            @if (activity.AssignedEmployeeNumber.HasValue && !string.IsNullOrWhiteSpace(activity.AssignedEmployeeName))
+                                                            {
+                                                                <span>Zugewiesen an: @activity.AssignedEmployeeName</span>
+                                                            }
+                                                            @if (activity.VehicleGattungNumber.HasValue && !string.IsNullOrWhiteSpace(activity.VehicleGattungName))
+                                                            {
+                                                                <span>Gattung: @activity.VehicleGattungName</span>
+                                                            }
+                                                            @if (activity.VehicleNumber.HasValue)
+                                                            {
+                                                                <span>Fahrzeug: @(string.IsNullOrWhiteSpace(activity.VehicleName) ? activity.VehicleNumber.ToString() : activity.VehicleName)</span>
+                                                            }
+                                                            @if (activity.RentalContractNumber.HasValue)
+                                                            {
+                                                                <span>Mietvertrag: @(string.IsNullOrWhiteSpace(activity.RentalContractName) ? activity.RentalContractNumber.ToString() : activity.RentalContractName)</span>
+                                                            }
+                                                        </div>
+                                                    }
+                                                </div>
+                                                <div class="flex shrink-0 items-center gap-1">
+                                                    <button @onclick="() => BeginEditActivity(activity)" type="button" aria-label="Aktivität bearbeiten" title="Bearbeiten" class="grid size-8 place-items-center rounded text-[#62728B] hover:bg-[#EEF0F3] hover:text-[#213852] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#E98200]">
+                                                        <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="m15 5 4 4M4 20l4.5-1 10-10a2.1 2.1 0 0 0-3-3l-10 10L4 20Z" /></svg>
+                                                    </button>
+                                                    <button @onclick="() => DeleteActivityAsync(activity)" type="button" aria-label="Aktivität löschen" title="Löschen" class="grid size-8 place-items-center rounded text-[#A34132] hover:bg-[#FCEBE8] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#A34132]">
+                                                        <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M4 7h16M10 11v6m4-6v6M6 7l1 14h10l1-14M9 7V4h6v3" /></svg>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </li>
+                                    }
+                                </ol>
+                            }
+                        }
                     </div>
+                </article>
+                    <nav aria-label="Kontaktaktionen" class="relative z-20 flex w-10 shrink-0 flex-col gap-1 border-l border-white/10 bg-[#102849] p-1">
+                        <button @onclick="ToggleActivityFlyout" type="button" aria-label="Aktivitäten" title="Aktivitäten" aria-pressed="@activityFlyoutOpen" class="grid size-8 place-items-center rounded-sm transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[#FF8C1A] @(activityFlyoutOpen ? "bg-white/10 text-[#FFB45C]" : "text-white/55 hover:bg-white/5 hover:text-white")">
+                            <svg class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M5 4v16M5 6h12l-2 3 2 3H5M5 15h12l-2 2 2 2H5" /></svg>
+                        </button>
+                    </nav>
+                    @if (activityFlyoutOpen)
+                    {
+                        <ContactActivityFlyout @key="SelectedContact.Key" Contact="SelectedContact" OnClose="CloseActivityFlyout" />
+                    }
                 </div>
+            }
+            else
+            {
+                <div class="grid min-h-64 flex-1 place-items-center rounded-[26px] border border-dashed border-white/15 text-sm text-white/50">Kontakt auswählen</div>
             }
         </main>
     </div>
 }
 
 @code {
+    private static readonly string[] QuarterHourOptions = Enumerable.Range(0, 96)
+        .Select(index => TimeSpan.FromMinutes(index * 15).ToString(@"hh\:mm"))
+        .ToArray();
+    private static readonly string[] ActivityTypeOrder = ["E-Mail", "Notiz", "Aufgabe", "Termin"];
+
     private IReadOnlyList<Contact> contacts = [];
     private Contact? SelectedContact;
     private string searchTerm = string.Empty;
+    private bool showOnlyRentalTenants = true;
     private bool isLoading = true;
     private ElementReference contactList;
-    private ElementReference contactPanelHost;
     private bool contactNavigationAttached;
-    private bool panelResizeAttached;
+    private IReadOnlyList<ContactActivity> contactActivities = [];
+    private IReadOnlyList<ContactActivityType> activityTypes = [];
+    private ContactActivityAssociations activityAssociations = new();
+    private ContactActivity activityDraft = new();
+    private string activityDateInput = string.Empty;
+    private string activityTimeInput = string.Empty;
+    private int? editingActivityNumber;
+    private bool activitiesLoading;
+    private string? activitiesError;
+    private string? activityEditorError;
+    private string? activitySpeechMessage;
+    private bool activityEditorOpen;
+    private bool isSavingActivity;
+    private bool isDictatingActivity;
+    private int? activeActivityTypeNumber;
     private IReadOnlyList<SharePointDocumentItem> documentItems = [];
     private string? documentDriveId;
     private List<SharePointDocumentFolder> documentBreadcrumb = [];
     private bool documentsLoading;
     private string? documentsError;
-    private ContactPanel? activeContactPanel = ContactPanel.People;
-    private int DocumentCount
-    {
-        get
-        {
-            var count = 0;
-            foreach (var item in documentItems)
-            {
-                if (!item.IsFolder)
-                {
-                    count++;
-                }
-            }
+    private ContactPanel activeContactPanel = ContactPanel.MasterData;
+    private bool activityFlyoutOpen;
 
-            return count;
-        }
-    }
+    private int DocumentCount => documentItems.Count(item => !item.IsFolder);
+    private IReadOnlyList<ContactActivityType> ActivityTypeTabs => ActivityTypeOrder
+        .Select(name => activityTypes.FirstOrDefault(type => string.Equals(type.Name, name, StringComparison.OrdinalIgnoreCase)))
+        .OfType<ContactActivityType>()
+        .ToArray();
+    private IEnumerable<ContactActivity> FilteredActivities => contactActivities
+        .Where(activity => activity.TypeNumber == activeActivityTypeNumber);
 
     private enum ContactPanel
     {
+        MasterData,
         People,
-        Documents
+        Documents,
+        Activities
     }
 
     private IEnumerable<Contact> FilteredContacts => contacts.Where(contact =>
-        $"{contact.DisplayName} {contact.Email} {contact.PhoneNumber} {contact.Address} {string.Join(" ", contact.Persons.Select(person => $"{person.DisplayName} {person.JobTitle} {person.Email}"))}"
+        (!showOnlyRentalTenants || contact.HasRentalContractAsTenant)
+        && $"{contact.DisplayName} {contact.Email} {contact.PhoneNumber} {contact.Address} {string.Join(" ", contact.Persons.Select(person => $"{person.DisplayName} {person.JobTitle} {person.Email}"))}"
             .Contains(searchTerm, StringComparison.OrdinalIgnoreCase));
 
     protected override async Task OnInitializedAsync()
     {
         contacts = await ContactService.GetContactsAsync();
-        SelectedContact = contacts.FirstOrDefault();
+        EnsureFilteredSelection();
         isLoading = false;
     }
 
@@ -360,21 +502,33 @@ else
             await JS.InvokeVoidAsync("northrailChat.attachContactNavigation", contactList);
             contactNavigationAttached = true;
         }
-
-        if (SelectedContact is not null && activeContactPanel is not null && !panelResizeAttached)
-        {
-            await JS.InvokeVoidAsync("northrailChat.attachContactPanelSplitter", contactPanelHost);
-            panelResizeAttached = true;
-        }
     }
 
     private void EnsureFilteredSelection()
     {
         var visibleContacts = FilteredContacts.ToList();
-        if (visibleContacts.Count > 0 && !visibleContacts.Any(contact => contact.Key == SelectedContact?.Key))
+        if (visibleContacts.Count == 0)
+        {
+            SelectedContact = null;
+        }
+        else if (!visibleContacts.Any(contact => contact.Key == SelectedContact?.Key))
         {
             SelectedContact = visibleContacts[0];
         }
+    }
+
+    private void SetCustomerFilter(bool rentalTenantsOnly)
+    {
+        showOnlyRentalTenants = rentalTenantsOnly;
+        EnsureFilteredSelection();
+    }
+
+    private void ToggleActivityFlyout() => activityFlyoutOpen = !activityFlyoutOpen;
+
+    private Task CloseActivityFlyout()
+    {
+        activityFlyoutOpen = false;
+        return Task.CompletedTask;
     }
 
     private async Task HandleSearchKeyDown(KeyboardEventArgs args)
@@ -387,26 +541,316 @@ else
 
     private async Task SelectContact(Contact contact)
     {
+        if (SelectedContact?.Key != contact.Key)
+        {
+            activityEditorOpen = false;
+            editingActivityNumber = null;
+            activityEditorError = null;
+            if (isDictatingActivity)
+            {
+                await JS.InvokeVoidAsync("northrailChat.stopActivitySpeech");
+            }
+        }
+
         SelectedContact = contact;
         if (activeContactPanel == ContactPanel.Documents)
         {
             await LoadSharePointDocumentsAsync();
         }
+        else if (activeContactPanel == ContactPanel.Activities)
+        {
+            await LoadContactActivitiesAsync();
+        }
     }
 
-    private async Task ToggleContactPanel(ContactPanel panel)
+    private async Task SetContactPanelAsync(ContactPanel panel)
     {
-        if (activeContactPanel == panel)
-        {
-            activeContactPanel = null;
-            panelResizeAttached = false;
-            return;
-        }
-
         activeContactPanel = panel;
         if (panel == ContactPanel.Documents)
         {
             await LoadSharePointDocumentsAsync();
+        }
+        else if (panel == ContactPanel.Activities)
+        {
+            await LoadContactActivitiesAsync();
+        }
+    }
+
+    private async Task LoadContactActivitiesAsync()
+    {
+        if (SelectedContact is null)
+        {
+            return;
+        }
+
+        activitiesLoading = true;
+        activitiesError = null;
+        contactActivities = [];
+        try
+        {
+            activityAssociations = await ContactActivityService.GetAssociationsForContactAsync(SelectedContact.Number);
+            if (activityTypes.Count == 0)
+            {
+                activityTypes = await ContactActivityService.GetActivityTypesAsync();
+            }
+
+            if (activeActivityTypeNumber is null || !ActivityTypeTabs.Any(type => type.Number == activeActivityTypeNumber))
+            {
+                activeActivityTypeNumber = ActivityTypeTabs.FirstOrDefault()?.Number;
+            }
+
+            contactActivities = await ContactActivityService.GetForContactAsync(SelectedContact.Number);
+        }
+        catch (Exception exception)
+        {
+            Logger.LogError(exception, "Could not load activities for contact {ContactNumber}.", SelectedContact.Number);
+            activitiesError = "Die Aktivitäten konnten nicht geladen werden.";
+        }
+        finally
+        {
+            activitiesLoading = false;
+        }
+    }
+
+    private async Task SelectActivityTypeAsync(ContactActivityType type)
+    {
+        if (activeActivityTypeNumber == type.Number)
+        {
+            return;
+        }
+
+        activeActivityTypeNumber = type.Number;
+        if (activityEditorOpen)
+        {
+            activityEditorOpen = false;
+            editingActivityNumber = null;
+            activityEditorError = null;
+            activitySpeechMessage = null;
+            if (isDictatingActivity)
+            {
+                await JS.InvokeVoidAsync("northrailChat.stopActivitySpeech");
+            }
+        }
+    }
+
+    private void BeginNewActivity()
+    {
+        editingActivityNumber = null;
+        activitySpeechMessage = null;
+        var now = DateTime.Now;
+        var minutesSinceMidnight = now.Hour * 60 + now.Minute;
+        var roundedDateTime = now.Date.AddMinutes(minutesSinceMidnight / 15 * 15);
+        activityDraft = new ContactActivity
+        {
+            TypeNumber = activeActivityTypeNumber ?? ActivityTypeTabs.FirstOrDefault()?.Number,
+            ActivityDate = roundedDateTime
+        };
+        SetActivityDateInputs(roundedDateTime);
+        activityEditorError = null;
+        activitySpeechMessage = null;
+        activityEditorOpen = true;
+    }
+
+    private void BeginEditActivity(ContactActivity activity)
+    {
+        activeActivityTypeNumber = activity.TypeNumber;
+        editingActivityNumber = activity.Number;
+        activitySpeechMessage = null;
+        activityDraft = new ContactActivity
+        {
+            Number = activity.Number,
+            TypeNumber = activity.TypeNumber,
+            PersonNumber = activity.PersonNumber,
+            EmployeeNumber = activity.EmployeeNumber,
+            AssignedEmployeeNumber = activity.AssignedEmployeeNumber,
+            VehicleGattungNumber = activity.VehicleGattungNumber,
+            VehicleNumber = activity.VehicleNumber,
+            RentalContractNumber = activity.RentalContractNumber,
+            ActivityDate = activity.ActivityDate,
+            Subject = activity.Subject,
+            Text = activity.Text
+        };
+        SetActivityDateInputs(activity.ActivityDate);
+        activityEditorError = null;
+        activitySpeechMessage = null;
+        activityEditorOpen = true;
+    }
+
+    private async Task CancelActivityEdit()
+    {
+        activityEditorOpen = false;
+        activityEditorError = null;
+        activitySpeechMessage = null;
+        if (isDictatingActivity)
+        {
+            await JS.InvokeVoidAsync("northrailChat.stopActivitySpeech");
+        }
+    }
+
+    private void UpdateActivityDate(ChangeEventArgs args)
+    {
+        activityDateInput = args.Value?.ToString() ?? string.Empty;
+        UpdateDraftActivityDateTime();
+    }
+
+    private void UpdateActivityTime(ChangeEventArgs args)
+    {
+        activityTimeInput = args.Value?.ToString() ?? string.Empty;
+        UpdateDraftActivityDateTime();
+    }
+
+    private void SetActivityDateInputs(DateTime? value)
+    {
+        activityDateInput = value?.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture) ?? string.Empty;
+        activityTimeInput = value?.ToString("HH:mm", System.Globalization.CultureInfo.InvariantCulture) ?? string.Empty;
+    }
+
+    private void UpdateDraftActivityDateTime()
+    {
+        if (DateTime.TryParseExact(
+            $"{activityDateInput} {activityTimeInput}",
+            "yyyy-MM-dd HH:mm",
+            System.Globalization.CultureInfo.InvariantCulture,
+            System.Globalization.DateTimeStyles.None,
+            out var activityDateTime))
+        {
+            activityDraft.ActivityDate = activityDateTime;
+        }
+        else
+        {
+            activityDraft.ActivityDate = null;
+        }
+    }
+
+    private async Task ToggleActivityDictationAsync()
+    {
+        if (isDictatingActivity)
+        {
+            await JS.InvokeVoidAsync("northrailChat.stopActivitySpeech");
+            return;
+        }
+
+        isDictatingActivity = true;
+        activitySpeechMessage = "Sprich jetzt auf Deutsch …";
+        var targetContactKey = SelectedContact?.Key;
+        var targetDraft = activityDraft;
+        try
+        {
+            var transcript = await JS.InvokeAsync<string>("northrailChat.startActivitySpeech");
+            if (!activityEditorOpen || SelectedContact?.Key != targetContactKey || !ReferenceEquals(activityDraft, targetDraft))
+            {
+                return;
+            }
+
+            if (string.IsNullOrWhiteSpace(transcript))
+            {
+                activitySpeechMessage = "Kein Text erkannt.";
+                return;
+            }
+
+            ApplyActivityTranscript(transcript);
+        }
+        catch (JSException exception)
+        {
+            Logger.LogInformation(exception, "Browser speech recognition could not transcribe an activity.");
+            activitySpeechMessage = "Spracheingabe nicht verfügbar. Bitte Mikrofonberechtigung und Browser prüfen.";
+        }
+        finally
+        {
+            isDictatingActivity = false;
+        }
+    }
+
+    private void ApplyActivityTranscript(string transcript)
+    {
+        var existingText = activityDraft.Text.TrimEnd();
+        activityDraft.Text = string.IsNullOrEmpty(existingText)
+            ? transcript.Trim()
+            : $"{existingText}{Environment.NewLine}{transcript.Trim()}";
+        activitySpeechMessage = "Text übernommen. Die Auswahlfelder wurden nicht geändert.";
+    }
+
+    private async Task SaveActivityAsync()
+    {
+        if (SelectedContact is null || activityDraft.TypeNumber is null)
+        {
+            activityEditorError = "Bitte einen Aktivitätstyp auswählen.";
+            return;
+        }
+
+        isSavingActivity = true;
+        activityEditorError = null;
+        try
+        {
+            if (editingActivityNumber is { } activityNumber)
+            {
+                activityDraft = new ContactActivity
+                {
+                    Number = activityNumber,
+                    TypeNumber = activityDraft.TypeNumber,
+                    PersonNumber = activityDraft.PersonNumber,
+                    EmployeeNumber = activityDraft.EmployeeNumber,
+                    AssignedEmployeeNumber = activityDraft.AssignedEmployeeNumber,
+                    VehicleGattungNumber = activityDraft.VehicleGattungNumber,
+                    VehicleNumber = activityDraft.VehicleNumber,
+                    RentalContractNumber = activityDraft.RentalContractNumber,
+                    ActivityDate = activityDraft.ActivityDate,
+                    Subject = activityDraft.Subject,
+                    Text = activityDraft.Text
+                };
+                if (!await ContactActivityService.UpdateAsync(SelectedContact.Number, activityDraft))
+                {
+                    activityEditorError = "Die Aktivität wurde nicht gefunden oder gehört nicht zu diesem Kontakt.";
+                    return;
+                }
+            }
+            else
+            {
+                await ContactActivityService.CreateAsync(SelectedContact.Number, activityDraft);
+            }
+
+            activityEditorOpen = false;
+            contactActivities = await ContactActivityService.GetForContactAsync(SelectedContact.Number);
+        }
+        catch (Exception exception)
+        {
+            Logger.LogError(exception, "Could not save activity for contact {ContactNumber}.", SelectedContact.Number);
+            activityEditorError = "Die Aktivität konnte nicht gespeichert werden.";
+        }
+        finally
+        {
+            isSavingActivity = false;
+        }
+    }
+
+    private async Task DeleteActivityAsync(ContactActivity activity)
+    {
+        if (SelectedContact is null
+            || !await JS.InvokeAsync<bool>("confirm", $"Aktivität ‚{activity.Type}‘ wirklich löschen?"))
+        {
+            return;
+        }
+
+        activitiesLoading = true;
+        activitiesError = null;
+        try
+        {
+            if (!await ContactActivityService.DeleteAsync(SelectedContact.Number, activity.Number))
+            {
+                activitiesError = "Die Aktivität wurde nicht gefunden oder gehört nicht zu diesem Kontakt.";
+                return;
+            }
+
+            contactActivities = await ContactActivityService.GetForContactAsync(SelectedContact.Number);
+        }
+        catch (Exception exception)
+        {
+            Logger.LogError(exception, "Could not delete activity {ActivityNumber} for contact {ContactNumber}.", activity.Number, SelectedContact.Number);
+            activitiesError = "Die Aktivität konnte nicht gelöscht werden.";
+        }
+        finally
+        {
+            activitiesLoading = false;
         }
     }
 
@@ -487,14 +931,11 @@ else
         }
     }
 
-    private void CloseContactPanel()
-    {
-        activeContactPanel = null;
-        panelResizeAttached = false;
-    }
-
     private static string Initials(Contact contact) =>
         string.Concat(contact.DisplayName.Split(' ', StringSplitOptions.RemoveEmptyEntries)
             .Take(2)
             .Select(part => char.ToUpperInvariant(part[0])));
+
+    private static string DisplayOrFallback(string value) =>
+        string.IsNullOrWhiteSpace(value) ? "Nicht hinterlegt" : value;
 }

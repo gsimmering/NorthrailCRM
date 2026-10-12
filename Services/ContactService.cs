@@ -33,6 +33,9 @@ public sealed class ContactService
                 COALESCE(NULLIF(l.Bezeichnung, N''), N'') AS Country,
                 COALESCE(k.Kunde, CONVERT(bit, 0)) AS IsCustomer,
                 COALESCE(k.Lieferant, CONVERT(bit, 0)) AS IsSupplier,
+                CONVERT(bit, CASE WHEN EXISTS (
+                    SELECT 1 FROM dbo.t_Mietvertrag AS rentalContract WHERE rentalContract.Mieter_Nr = k.Nr
+                ) THEN 1 ELSE 0 END) AS HasRentalContractAsTenant,
                 p.Nr AS PersonNumber,
                 COALESCE(NULLIF(p.Titel, N''), N'') AS PersonTitle,
                 COALESCE(NULLIF(p.Vorname, N''), N'') AS PersonFirstName,
@@ -65,6 +68,7 @@ public sealed class ContactService
         var countryOrdinal = reader.GetOrdinal("Country");
         var isCustomerOrdinal = reader.GetOrdinal("IsCustomer");
         var isSupplierOrdinal = reader.GetOrdinal("IsSupplier");
+        var hasRentalContractAsTenantOrdinal = reader.GetOrdinal("HasRentalContractAsTenant");
         var personNumberOrdinal = reader.GetOrdinal("PersonNumber");
         var personTitleOrdinal = reader.GetOrdinal("PersonTitle");
         var personFirstNameOrdinal = reader.GetOrdinal("PersonFirstName");
@@ -92,7 +96,8 @@ public sealed class ContactService
                     City = reader.GetString(cityOrdinal),
                     Country = reader.GetString(countryOrdinal),
                     IsCustomer = reader.GetBoolean(isCustomerOrdinal),
-                    IsSupplier = reader.GetBoolean(isSupplierOrdinal)
+                    IsSupplier = reader.GetBoolean(isSupplierOrdinal),
+                    HasRentalContractAsTenant = reader.GetBoolean(hasRentalContractAsTenantOrdinal)
                 };
                 contacts.Add(currentContact);
             }

@@ -1,0 +1,619 @@
+@implements IAsyncDisposable
+@using NorthrailCRM.Models
+@using NorthrailCRM.Services
+@using Microsoft.JSInterop
+@inject ContactActivityService ActivityService
+@inject IJSRuntime JS
+@inject ILogger<ContactActivityFlyout> Logger
+
+<aside aria-label="Aktivitäten von @CurrentContactName" class="absolute inset-y-0 right-12 z-30 flex w-[min(420px,calc(100vw-4.5rem))] flex-col overflow-hidden rounded-[18px] border border-[#D9DFE7] bg-white text-[#102344] shadow-xl shadow-black/20 lg:static lg:inset-auto lg:h-full lg:w-[420px] lg:shrink-0 lg:shadow-lg">
+    <header class="flex shrink-0 items-center justify-between gap-3 border-b border-[#E4E8EE] px-4 py-4">
+        <div class="min-w-0">
+            <p class="text-[10px] font-bold uppercase tracking-[0.16em] text-[#738095]">Kontaktaktivitäten</p>
+            <h3 class="mt-1 truncate text-sm font-semibold">@CurrentContactName</h3>
+        </div>
+        <button @onclick="CloseAsync" type="button" aria-label="Aktivitäten schließen" title="Schließen" class="grid size-8 shrink-0 place-items-center rounded text-[#62728B] hover:bg-[#EEF0F3] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#E98200]">
+            <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18" /></svg>
+        </button>
+    </header>
+
+    <div class="min-h-0 flex-1 overflow-y-auto px-4 py-4">
+        @if (errorMessage is not null)
+        {
+            <p role="alert" class="mb-4 rounded-md bg-[#FCEBE8] px-3 py-2.5 text-sm text-[#A34132]">@errorMessage</p>
+        }
+
+        @if (TypeTabs.Count > 0)
+        {
+            <nav role="tablist" aria-label="Aktivitätstypen" class="flex gap-1 overflow-x-auto border-b border-[#E4E8EE]">
+                @foreach (var type in TypeTabs)
+                {
+                    var typeCount = activities.Count(activity => activity.TypeNumber == type.Number);
+                    <button @onclick="() => SelectTypeAsync(type)" type="button" role="tab" aria-selected="@(activeTypeNumber == type.Number)" class="whitespace-nowrap border-b-2 px-3 py-2.5 text-xs font-medium transition-colors @(activeTypeNumber == type.Number ? "border-[#E98200] text-[#B96600]" : "border-transparent text-[#738095] hover:text-[#40536D]")">@type.Name <span class="ml-1 text-[10px] text-[#AAB3BF]">@typeCount</span></button>
+                }
+            </nav>
+
+            <div class="my-4 flex items-center justify-between gap-2">
+                <p class="text-xs font-medium text-[#738095]">@FilteredActivities.Count() Einträge</p>
+                <button @onclick="BeginNewActivity" type="button" aria-label="@($"{CurrentTypeName} hinzufügen")" title="@($"{CurrentTypeName} hinzufügen")" disabled="@isLoading" class="inline-flex items-center gap-1.5 rounded-md bg-[#E98200] px-2.5 py-2 text-xs font-medium text-white hover:bg-[#C86F00] disabled:cursor-wait disabled:opacity-50">
+                    <svg class="size-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>
+                    @CurrentTypeName hinzufügen
+                </button>
+            </div>
+        }
+
+        @if (editorOpen)
+        {
+            <EditForm Model="draft" OnValidSubmit="SaveAsync" class="mb-5 rounded-md border border-[#D9DFE7] p-3">
+                <div class="grid gap-3 sm:grid-cols-2">
+                    <div class="sm:col-span-2">
+                        <label for="activity-contact" class="block text-xs font-medium text-[#62728B]">Kontakt</label>
+                        <InputSelect TValue="int" id="activity-contact" @bind-Value="activityContactNumber" @bind-Value:after="ChangeActivityContactAsync" class="mt-1 w-full rounded-md border border-[#D9DFE7] bg-white px-2.5 py-2 text-sm outline-none focus:border-[#E98200]">
+                            @foreach (var contact in associations.Contacts)
+                            {
+                                <option value="@contact.Number">@contact.Name</option>
+                            }
+                        </InputSelect>
+                    </div>
+                    <div class="sm:col-span-2">
+                        <label for="activity-person" class="block text-xs font-medium text-[#62728B]">Person des Kontakts</label>
+                        <InputSelect TValue="int?" id="activity-person" @bind-Value="draft.PersonNumber" class="mt-1 w-full rounded-md border border-[#D9DFE7] bg-white px-2.5 py-2 text-sm outline-none focus:border-[#E98200]">
+                            <option value="">Keine Zuordnung</option>
+                            @foreach (var person in associations.People)
+                            {
+                                <option value="@person.Number">@person.Name</option>
+                            }
+                        </InputSelect>
+                    </div>
+                    <div class="sm:col-span-2 grid grid-cols-2 gap-3">
+                        <div>
+                            <label for="activity-date" class="block text-xs font-medium text-[#62728B]">Datum</label>
+                            <input id="activity-date" type="date" value="@dateInput" @onchange="UpdateDate" class="mt-1 w-full rounded-md border border-[#D9DFE7] bg-white px-2.5 py-2 text-sm outline-none focus:border-[#E98200]" />
+                        </div>
+                        <div>
+                            <select id="activity-time" aria-label="Uhrzeit" value="@timeInput" @onchange="UpdateTime" class="mt-5 w-full rounded-md border border-[#D9DFE7] bg-white px-2.5 py-2 text-sm outline-none focus:border-[#E98200]">
+                                <option value="">Bitte auswählen</option>
+                                @if (!string.IsNullOrEmpty(timeInput) && !QuarterHourOptions.Contains(timeInput))
+                                {
+                                    <option value="@timeInput">@timeInput (bestehende Uhrzeit)</option>
+                                }
+                                @foreach (var time in QuarterHourOptions)
+                                {
+                                    <option value="@time">@time</option>
+                                }
+                            </select>
+                        </div>
+                    </div>
+                    <div class="sm:col-span-2 grid grid-cols-2 gap-3">
+                        <div>
+                            <label for="activity-end-date" class="block text-xs font-medium text-[#62728B]">Datum bis</label>
+                            <input id="activity-end-date" type="date" value="@endDateInput" @onchange="UpdateEndDate" class="mt-1 w-full rounded-md border border-[#D9DFE7] bg-white px-2.5 py-2 text-sm outline-none focus:border-[#E98200]" />
+                        </div>
+                        <div>
+                            <select id="activity-end-time" aria-label="Uhrzeit bis" value="@endTimeInput" @onchange="UpdateEndTime" class="mt-5 w-full rounded-md border border-[#D9DFE7] bg-white px-2.5 py-2 text-sm outline-none focus:border-[#E98200]">
+                                <option value="">Bitte auswählen</option>
+                                @if (!string.IsNullOrEmpty(endTimeInput) && !QuarterHourOptions.Contains(endTimeInput))
+                                {
+                                    <option value="@endTimeInput">@endTimeInput (bestehende Uhrzeit)</option>
+                                }
+                                @foreach (var time in QuarterHourOptions)
+                                {
+                                    <option value="@time">@time</option>
+                                }
+                            </select>
+                        </div>
+                    </div>
+                    <div>
+                        <label for="activity-employee" class="block text-xs font-medium text-[#62728B]">Ersteller</label>
+                        <InputSelect TValue="int?" id="activity-employee" @bind-Value="draft.EmployeeNumber" class="mt-1 w-full rounded-md border border-[#D9DFE7] bg-white px-2.5 py-2 text-sm outline-none focus:border-[#E98200]">
+                            <option value="">Keine Zuordnung</option>
+                            @foreach (var employee in associations.Employees)
+                            {
+                                <option value="@employee.Number">@employee.Name</option>
+                            }
+                        </InputSelect>
+                    </div>
+                    <div>
+                        <label for="activity-assigned-employee" class="block text-xs font-medium text-[#62728B]">Zugewiesen an</label>
+                        <InputSelect TValue="int?" id="activity-assigned-employee" @bind-Value="draft.AssignedEmployeeNumber" class="mt-1 w-full rounded-md border border-[#D9DFE7] bg-white px-2.5 py-2 text-sm outline-none focus:border-[#E98200]">
+                            <option value="">Keine Zuordnung</option>
+                            @foreach (var employee in associations.Employees)
+                            {
+                                <option value="@employee.Number">@employee.Name</option>
+                            }
+                        </InputSelect>
+                    </div>
+                    <div class="sm:col-span-2">
+                        <div class="flex items-center justify-between gap-3">
+                            <label for="activity-subject" class="block text-xs font-medium text-[#62728B]">Thema</label>
+                        </div>
+                        <InputText id="activity-subject" @bind-Value="draft.Subject" class="mt-1 w-full rounded-md border border-[#D9DFE7] px-2.5 py-2 text-sm outline-none focus:border-[#E98200]" />
+                    </div>
+                    <div class="sm:col-span-2">
+                        <div class="flex items-center justify-between gap-3">
+                            <label for="activity-text" class="block text-xs font-medium text-[#62728B]">Notiz</label>
+                            <button @onclick="ToggleDictationAsync" type="button" disabled="@isSaving" aria-label="@(isDictating ? "Spracheingabe beenden" : "Notiz diktieren")" title="@(isDictating ? "Spracheingabe beenden" : "Notiz diktieren")" class="grid size-8 place-items-center rounded text-[#62728B] hover:bg-[#EEF0F3] hover:text-[#213852] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#E98200] disabled:opacity-50">
+                                @if (isDictating)
+                                {
+                                    <svg class="size-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="6" y="6" width="12" height="12" rx="1" /></svg>
+                                }
+                                else
+                                {
+                                    <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="9" y="3" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3m-4 0h8"/></svg>
+                                }
+                            </button>
+                        </div>
+                        <InputTextArea id="activity-text" @bind-Value="draft.Text" rows="3" class="mt-1 w-full resize-y rounded-md border border-[#D9DFE7] px-2.5 py-2 text-sm outline-none focus:border-[#E98200]" />
+                        @if (!string.IsNullOrWhiteSpace(speechMessage))
+                        {
+                            <p role="status" class="mt-1.5 text-xs @(isDictating ? "text-[#B96600]" : "text-[#62728B]")">@speechMessage</p>
+                        }
+                    </div>
+                </div>
+                @if (!string.IsNullOrWhiteSpace(editorError))
+                {
+                    <p role="alert" class="mt-3 text-xs text-[#A34132]">@editorError</p>
+                }
+                <div class="mt-3 flex justify-end gap-2">
+                    <button @onclick="CancelEditAsync" type="button" disabled="@(isSaving || isDictating)" class="rounded-md border border-[#D9DFE7] px-2.5 py-1.5 text-xs text-[#40536D] hover:bg-[#F4F6F8]">Abbrechen</button>
+                    <button type="submit" disabled="@(isSaving || isDictating)" class="rounded-md bg-[#E98200] px-2.5 py-1.5 text-xs font-medium text-white hover:bg-[#C86F00] disabled:cursor-wait disabled:opacity-50">@(isSaving ? "Speichert ..." : editingId.HasValue ? "Änderungen speichern" : "Speichern")</button>
+                </div>
+            </EditForm>
+        }
+
+        @if (isLoading)
+        {
+            <p role="status" class="py-3 text-sm text-[#738095]">Aktivitäten werden geladen ...</p>
+        }
+        else if (errorMessage is not null)
+        {
+            <p role="alert" class="py-3 text-sm text-[#A34132]">@errorMessage</p>
+        }
+        else if (!FilteredActivities.Any())
+        {
+            <p class="py-3 text-sm text-[#738095]">Keine Aktivitäten in diesem Bereich.</p>
+        }
+        else
+        {
+            <ol class="divide-y divide-[#E4E8EE]">
+                @foreach (var activity in FilteredActivities)
+                {
+                    <li @key="activity.Number" class="py-4 first:pt-0">
+                        <div class="flex items-start justify-between gap-2">
+                            <div class="min-w-0 flex-1">
+                                <time class="text-[11px] text-[#738095]">
+                                    @(activity.ActivityDate?.ToString("dd.MM.yyyy HH:mm") ?? "Datum nicht hinterlegt")
+                                    @if (activity.ActivityEndDate is { } endDate)
+                                    {
+                                        <span> bis @endDate.ToString("dd.MM.yyyy HH:mm")</span>
+                                    }
+                                </time>
+                                @if (!string.IsNullOrWhiteSpace(activity.Subject))
+                                {
+                                    <p class="mt-1 font-medium text-sm text-[#213852]">@activity.Subject</p>
+                                }
+                                @if (!string.IsNullOrWhiteSpace(activity.Text))
+                                {
+                                    <p class="mt-1 whitespace-pre-wrap text-sm leading-5 text-[#40536D]">@activity.Text</p>
+                                }
+                                @if (HasAssociations(activity))
+                                {
+                                    <div class="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-[10px] text-[#738095]">
+                                        @if (activity.PersonNumber.HasValue && !string.IsNullOrWhiteSpace(activity.PersonName))
+                                        {
+                                            <span>@activity.PersonName</span>
+                                        }
+                                        @if (activity.EmployeeNumber.HasValue && !string.IsNullOrWhiteSpace(activity.EmployeeName))
+                                        {
+                                            <span>@activity.EmployeeName</span>
+                                        }
+                                        @if (activity.AssignedEmployeeNumber.HasValue && !string.IsNullOrWhiteSpace(activity.AssignedEmployeeName))
+                                        {
+                                            <span>Zugewiesen an: @activity.AssignedEmployeeName</span>
+                                        }
+                                        @if (activity.VehicleGattungNumber.HasValue && !string.IsNullOrWhiteSpace(activity.VehicleGattungName))
+                                        {
+                                            <span>@activity.VehicleGattungName</span>
+                                        }
+                                        @if (activity.VehicleNumber.HasValue && !string.IsNullOrWhiteSpace(activity.VehicleName))
+                                        {
+                                            <span>@activity.VehicleName</span>
+                                        }
+                                        @if (activity.RentalContractNumber.HasValue && !string.IsNullOrWhiteSpace(activity.RentalContractName))
+                                        {
+                                            <span>MV @activity.RentalContractName</span>
+                                        }
+                                    </div>
+                                }
+                            </div>
+                            <div class="flex shrink-0 items-center gap-1">
+                                <button @onclick="() => BeginEditAsync(activity)" type="button" aria-label="Aktivität bearbeiten" title="Bearbeiten" class="grid size-8 place-items-center rounded text-[#62728B] hover:bg-[#EEF0F3] hover:text-[#213852]">
+                                    <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="m15 5 4 4M4 20l4.5-1 10-10a2.1 2.1 0 0 0-3-3l-10 10L4 20Z" /></svg>
+                                </button>
+                                <button @onclick="() => DeleteAsync(activity)" type="button" aria-label="Aktivität löschen" title="Löschen" class="grid size-8 place-items-center rounded text-[#A34132] hover:bg-[#FCEBE8]">
+                                    <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M4 7h16M10 11v6m4-6v6M6 7l1 14h10l1-14M9 7V4h6v3" /></svg>
+                                </button>
+                            </div>
+                        </div>
+                    </li>
+                }
+            </ol>
+        }
+    </div>
+</aside>
+
+@code {
+    private static readonly string[] QuarterHourOptions = Enumerable.Range(0, 96)
+        .Select(index => TimeSpan.FromMinutes(index * 15).ToString(@"hh\:mm"))
+        .ToArray();
+    private static readonly string[] ActivityTypeOrder = ["E-Mail", "Notiz", "Aufgabe", "Termin"];
+
+    [Parameter, EditorRequired]
+    public Contact Contact { get; set; } = default!;
+
+    [Parameter]
+    public EventCallback OnClose { get; set; }
+
+    private IReadOnlyList<ContactActivity> activities = [];
+    private IReadOnlyList<ContactActivityType> activityTypes = [];
+    private ContactActivityAssociations associations = new();
+    private ContactActivity draft = new();
+    private int activityContactNumber;
+    private int? activeTypeNumber;
+    private int? editingId;
+    private int? editingOriginalContactNumber;
+    private string dateInput = string.Empty;
+    private string timeInput = string.Empty;
+    private string endDateInput = string.Empty;
+    private string endTimeInput = string.Empty;
+    private string? editorError;
+    private string? speechMessage;
+    private string? errorMessage;
+    private bool isLoading = true;
+    private bool isSaving;
+    private bool isDictating;
+    private bool editorOpen;
+
+    private IReadOnlyList<ContactActivityType> TypeTabs => ActivityTypeOrder
+        .Select(name => activityTypes.FirstOrDefault(type => string.Equals(type.Name, name, StringComparison.OrdinalIgnoreCase)))
+        .OfType<ContactActivityType>()
+        .ToArray();
+    private string CurrentTypeName => TypeTabs.FirstOrDefault(type => type.Number == activeTypeNumber)?.Name ?? "Aktivität";
+    private string CurrentContactName => associations.Contacts.FirstOrDefault(contact => contact.Number == activityContactNumber)?.Name ?? Contact.DisplayName;
+
+    private IEnumerable<ContactActivity> FilteredActivities => activities
+        .Where(activity => activity.TypeNumber == activeTypeNumber);
+
+    protected override async Task OnInitializedAsync()
+    {
+        activityContactNumber = Contact.Number;
+        await LoadAsync();
+    }
+
+    private async Task LoadAsync()
+    {
+        isLoading = true;
+        errorMessage = null;
+        try
+        {
+            associations = await ActivityService.GetAssociationsForContactAsync(activityContactNumber);
+            activityTypes = await ActivityService.GetActivityTypesAsync();
+            if (activeTypeNumber is null || !TypeTabs.Any(type => type.Number == activeTypeNumber))
+            {
+                activeTypeNumber = TypeTabs.FirstOrDefault()?.Number;
+            }
+
+            activities = await ActivityService.GetForContactAsync(activityContactNumber);
+        }
+        catch (Exception exception)
+        {
+            Logger.LogError(exception, "Could not load activities for contact {ContactNumber}.", Contact.Number);
+            errorMessage = "Die Aktivitäten konnten nicht geladen werden.";
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private async Task ChangeActivityContactAsync()
+    {
+        if (activityContactNumber == 0)
+        {
+            activityContactNumber = Contact.Number;
+        }
+
+        isLoading = true;
+        errorMessage = null;
+        try
+        {
+            associations = await ActivityService.GetAssociationsForContactAsync(activityContactNumber);
+            if (draft.PersonNumber is { } personNumber && !associations.People.Any(person => person.Number == personNumber))
+            {
+                draft.PersonNumber = null;
+            }
+            if (draft.RentalContractNumber is { } contractNumber && !associations.RentalContracts.Any(contract => contract.Number == contractNumber))
+            {
+                draft.RentalContractNumber = null;
+            }
+
+            activities = await ActivityService.GetForContactAsync(activityContactNumber);
+        }
+        catch (Exception exception)
+        {
+            Logger.LogError(exception, "Could not change activity contact to {ContactNumber}.", activityContactNumber);
+            errorMessage = "Die Daten für den ausgewählten Kontakt konnten nicht geladen werden.";
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private async Task SelectTypeAsync(ContactActivityType type)
+    {
+        if (activeTypeNumber == type.Number)
+        {
+            return;
+        }
+
+        activeTypeNumber = type.Number;
+        if (editorOpen)
+        {
+            await CancelEditAsync();
+        }
+    }
+
+    private void BeginNewActivity()
+    {
+        editingId = null;
+        editingOriginalContactNumber = null;
+        var now = DateTime.Now;
+        var minute = now.Hour * 60 + now.Minute;
+        var rounded = now.Date.AddMinutes(minute / 15 * 15);
+        draft = new ContactActivity { ContactNumber = activityContactNumber, TypeNumber = activeTypeNumber, ActivityDate = rounded };
+        SetDateInputs(rounded, null);
+        editorError = null;
+        speechMessage = null;
+        editorOpen = true;
+    }
+
+    private async Task BeginEditAsync(ContactActivity activity)
+    {
+        editingId = activity.Number;
+        editingOriginalContactNumber = activity.ContactNumber ?? activityContactNumber;
+        activityContactNumber = editingOriginalContactNumber.Value;
+        activeTypeNumber = activity.TypeNumber;
+        associations = await ActivityService.GetAssociationsForContactAsync(activityContactNumber);
+        draft = new ContactActivity
+        {
+            Number = activity.Number,
+            ContactNumber = activityContactNumber,
+            TypeNumber = activity.TypeNumber,
+            PersonNumber = activity.PersonNumber,
+            EmployeeNumber = activity.EmployeeNumber,
+            AssignedEmployeeNumber = activity.AssignedEmployeeNumber,
+            VehicleGattungNumber = activity.VehicleGattungNumber,
+            VehicleNumber = activity.VehicleNumber,
+            RentalContractNumber = activity.RentalContractNumber,
+            ActivityDate = activity.ActivityDate,
+            ActivityEndDate = activity.ActivityEndDate,
+            Subject = activity.Subject,
+            Text = activity.Text
+        };
+        SetDateInputs(activity.ActivityDate, activity.ActivityEndDate);
+        editorError = null;
+        speechMessage = null;
+        editorOpen = true;
+    }
+
+    private async Task CancelEditAsync()
+    {
+        editorOpen = false;
+        editorError = null;
+        speechMessage = null;
+        if (isDictating)
+        {
+            await JS.InvokeVoidAsync("northrailChat.stopActivitySpeech");
+        }
+    }
+
+    private void UpdateDate(ChangeEventArgs args)
+    {
+        dateInput = args.Value?.ToString() ?? string.Empty;
+        UpdateDateTime();
+    }
+
+    private void UpdateTime(ChangeEventArgs args)
+    {
+        timeInput = args.Value?.ToString() ?? string.Empty;
+        UpdateDateTime();
+    }
+
+    private void UpdateEndDate(ChangeEventArgs args)
+    {
+        endDateInput = args.Value?.ToString() ?? string.Empty;
+        UpdateEndDateTime();
+    }
+
+    private void UpdateEndTime(ChangeEventArgs args)
+    {
+        endTimeInput = args.Value?.ToString() ?? string.Empty;
+        UpdateEndDateTime();
+    }
+
+    private void SetDateInputs(DateTime? start, DateTime? end)
+    {
+        dateInput = start?.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture) ?? string.Empty;
+        timeInput = start?.ToString("HH:mm", System.Globalization.CultureInfo.InvariantCulture) ?? string.Empty;
+        endDateInput = end?.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture) ?? string.Empty;
+        endTimeInput = end?.ToString("HH:mm", System.Globalization.CultureInfo.InvariantCulture) ?? string.Empty;
+    }
+
+    private void UpdateDateTime()
+    {
+        draft.ActivityDate = ParseDateTime(dateInput, timeInput);
+    }
+
+    private void UpdateEndDateTime()
+    {
+        draft.ActivityEndDate = ParseDateTime(endDateInput, endTimeInput);
+    }
+
+    private static DateTime? ParseDateTime(string date, string time) => DateTime.TryParseExact(
+        $"{date} {time}",
+        "yyyy-MM-dd HH:mm",
+        System.Globalization.CultureInfo.InvariantCulture,
+        System.Globalization.DateTimeStyles.None,
+        out var dateTime) ? dateTime : null;
+
+    private async Task ToggleDictationAsync()
+    {
+        if (isDictating)
+        {
+            await JS.InvokeVoidAsync("northrailChat.stopActivitySpeech");
+            return;
+        }
+
+        isDictating = true;
+        speechMessage = "Sprich jetzt auf Deutsch …";
+        var draftAtStart = draft;
+        try
+        {
+            var transcript = await JS.InvokeAsync<string>("northrailChat.startActivitySpeech");
+            if (!editorOpen || !ReferenceEquals(draft, draftAtStart))
+            {
+                return;
+            }
+
+            if (string.IsNullOrWhiteSpace(transcript))
+            {
+                speechMessage = "Kein Text erkannt.";
+                return;
+            }
+
+            draft.Text = string.IsNullOrWhiteSpace(draft.Text)
+                ? transcript.Trim()
+                : $"{draft.Text.TrimEnd()}{Environment.NewLine}{transcript.Trim()}";
+            speechMessage = "Text übernommen. Die Auswahlfelder wurden nicht geändert.";
+        }
+        catch (JSException exception)
+        {
+            Logger.LogInformation(exception, "Browser speech recognition could not transcribe an activity.");
+            speechMessage = "Spracheingabe nicht verfügbar. Bitte Mikrofonberechtigung und Browser prüfen.";
+        }
+        finally
+        {
+            isDictating = false;
+        }
+    }
+
+    private async Task SaveAsync()
+    {
+        if (draft.TypeNumber is null)
+        {
+            editorError = "Bitte zuerst einen Aktivitätstyp auswählen.";
+            return;
+        }
+
+        isSaving = true;
+        editorError = null;
+        try
+        {
+            if (editingId is { } id)
+            {
+                draft = new ContactActivity
+                {
+                    Number = id,
+                    ContactNumber = activityContactNumber,
+                    TypeNumber = activeTypeNumber,
+                    PersonNumber = draft.PersonNumber,
+                    EmployeeNumber = draft.EmployeeNumber,
+                    AssignedEmployeeNumber = draft.AssignedEmployeeNumber,
+                    VehicleGattungNumber = draft.VehicleGattungNumber,
+                    VehicleNumber = draft.VehicleNumber,
+                    RentalContractNumber = draft.RentalContractNumber,
+                    ActivityDate = draft.ActivityDate,
+                    ActivityEndDate = draft.ActivityEndDate,
+                    Subject = draft.Subject,
+                    Text = draft.Text
+                };
+                if (!await ActivityService.UpdateAsync(editingOriginalContactNumber ?? Contact.Number, draft))
+                {
+                    editorError = "Die Aktivität wurde nicht gefunden oder gehört nicht zu diesem Kontakt.";
+                    return;
+                }
+            }
+            else
+            {
+                draft.ContactNumber = activityContactNumber;
+                draft.TypeNumber = activeTypeNumber;
+                await ActivityService.CreateAsync(activityContactNumber, draft);
+            }
+
+            editorOpen = false;
+            activities = await ActivityService.GetForContactAsync(activityContactNumber);
+        }
+        catch (Exception exception)
+        {
+            Logger.LogError(exception, "Could not save activity for contact {ContactNumber}.", activityContactNumber);
+            editorError = "Die Aktivität konnte nicht gespeichert werden.";
+        }
+        finally
+        {
+            isSaving = false;
+        }
+    }
+
+    private async Task DeleteAsync(ContactActivity activity)
+    {
+        if (!await JS.InvokeAsync<bool>("confirm", $"Aktivität ‚{activity.Type}‘ wirklich löschen?"))
+        {
+            return;
+        }
+
+        isLoading = true;
+        errorMessage = null;
+        try
+        {
+            if (!await ActivityService.DeleteAsync(activityContactNumber, activity.Number))
+            {
+                errorMessage = "Die Aktivität wurde nicht gefunden oder gehört nicht zu diesem Kontakt.";
+                return;
+            }
+
+            activities = await ActivityService.GetForContactAsync(activityContactNumber);
+        }
+        catch (Exception exception)
+        {
+            Logger.LogError(exception, "Could not delete activity {ActivityNumber} for contact {ContactNumber}.", activity.Number, activityContactNumber);
+            errorMessage = "Die Aktivität konnte nicht gelöscht werden.";
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private int TypeCount(int? typeNumber) => activities.Count(activity => activity.TypeNumber == typeNumber);
+
+    private static bool HasAssociations(ContactActivity activity) =>
+        activity.PersonNumber.HasValue || activity.EmployeeNumber.HasValue || activity.AssignedEmployeeNumber.HasValue || activity.VehicleGattungNumber.HasValue
+        || activity.VehicleNumber.HasValue || activity.RentalContractNumber.HasValue;
+
+    private Task CloseAsync() => OnClose.InvokeAsync();
+
+    public async ValueTask DisposeAsync()
+    {
+        if (isDictating)
+        {
+            try
+            {
+                await JS.InvokeVoidAsync("northrailChat.stopActivitySpeech");
+            }
+            catch (JSDisconnectedException)
+            {
+            }
+        }
+    }
+}

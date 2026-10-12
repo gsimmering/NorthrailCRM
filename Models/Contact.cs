@@ -15,6 +15,7 @@ public sealed class Contact
     public string Country { get; init; } = string.Empty;
     public bool IsCustomer { get; init; }
     public bool IsSupplier { get; init; }
+    public bool HasRentalContractAsTenant { get; init; }
     public List<Person> Persons { get; } = [];
 
     public string DisplayName => string.IsNullOrWhiteSpace(Company) ? $"Kontakt {Number}" : Company;
