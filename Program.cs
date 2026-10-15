@@ -9,6 +9,7 @@ builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 builder.Services.AddScoped<ContactService>();
 builder.Services.AddScoped<RentalContractService>();
+builder.Services.AddScoped<VehicleService>();
 builder.Services.AddScoped<LeadService>();
 builder.Services.AddHttpClient<SharePointDocumentService>();
 builder.Services.AddScoped<FoundryAgentChatService>();

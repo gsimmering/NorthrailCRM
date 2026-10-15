@@ -50,8 +50,8 @@ else
     <div class="rental-contracts-page-enter grid min-h-screen bg-[#0B2140] text-white lg:h-screen lg:min-h-0 lg:overflow-hidden lg:grid-cols-[232px_350px_minmax(0,1fr)]">
         <WorkspaceSidebar ActivePage="contracts" />
 
-        <section class="crm-contact-list max-h-[55vh] min-h-[45vh] overflow-y-auto border-b border-white/10 bg-[#102849] lg:h-screen lg:min-h-0 lg:max-h-screen lg:border-b-0 lg:border-r">
-            <div class="sticky top-0 z-10 bg-[#102849]">
+        <section class="flex max-h-[55vh] min-h-[45vh] flex-col overflow-hidden border-b border-white/10 bg-[#102849] lg:h-screen lg:min-h-0 lg:max-h-screen lg:border-b-0 lg:border-r">
+            <div class="shrink-0 bg-[#102849]">
                 <header class="border-b border-white/10 px-6 py-6">
                     <p class="text-xs font-medium uppercase tracking-[0.16em] text-[#FF9A2E]">CRM / Verträge</p>
                     <h1 class="mt-1 text-xl font-semibold tracking-tight text-white">Mietverträge <span class="ml-1 text-sm font-normal text-white/45">@contracts.Count</span></h1>
@@ -72,7 +72,7 @@ else
                 </div>
             </div>
 
-            <div @ref="contractList" role="listbox" aria-label="Mietverträge" class="divide-y divide-white/10">
+            <div @ref="contractList" role="listbox" aria-label="Mietverträge" class="crm-contact-list min-h-0 flex-1 divide-y divide-white/10 overflow-y-auto">
                 @foreach (var contract in FilteredContracts)
                 {
                     var selected = SelectedContract?.Number == contract.Number;
@@ -168,6 +168,10 @@ else
     private bool isLoading = true;
     private ElementReference contractList;
     private bool contractNavigationAttached;
+    private bool scrollToSelectedContract;
+
+    [SupplyParameterFromQuery(Name = "vertrag")]
+    public int? ContractNumber { get; set; }
 
     private IEnumerable<RentalContract> FilteredContracts => contracts.Where(contract =>
         (!showOnlyRunning || IsRunning(contract))
@@ -177,6 +181,14 @@ else
     protected override async Task OnInitializedAsync()
     {
         contracts = await RentalContractService.GetRentalContractsAsync();
+        var linkedContract = contracts.FirstOrDefault(contract => contract.Number == ContractNumber);
+        if (linkedContract is not null)
+        {
+            showOnlyRunning = IsRunning(linkedContract);
+            SelectedContract = linkedContract;
+            scrollToSelectedContract = true;
+        }
+
         EnsureFilteredSelection();
         isLoading = false;
     }
@@ -187,6 +199,12 @@ else
         {
             await JS.InvokeVoidAsync("northrailChat.attachContactNavigation", contractList);
             contractNavigationAttached = true;
+        }
+
+        if (scrollToSelectedContract && contracts.Count > 0)
+        {
+            scrollToSelectedContract = false;
+            await JS.InvokeVoidAsync("northrailChat.scrollToSelectedOption", contractList);
         }
     }
 

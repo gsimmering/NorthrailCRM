@@ -19,8 +19,8 @@ else
     <div class="grid min-h-screen bg-[#0B2140] text-white lg:h-screen lg:min-h-0 lg:overflow-hidden lg:grid-cols-[232px_320px_minmax(0,1fr)]">
         <WorkspaceSidebar ActivePage="leads" />
 
-        <aside class="max-h-[38vh] min-h-[220px] overflow-y-auto border-b border-white/10 bg-[#102849] lg:h-screen lg:min-h-0 lg:max-h-screen lg:border-b-0 lg:border-r">
-            <header class="flex items-center justify-between border-b border-white/10 px-5 py-5">
+        <aside class="flex max-h-[38vh] min-h-[220px] flex-col overflow-hidden border-b border-white/10 bg-[#102849] lg:h-screen lg:min-h-0 lg:max-h-screen lg:border-b-0 lg:border-r">
+            <header class="flex shrink-0 items-center justify-between border-b border-white/10 px-5 py-5">
                 <div>
                     <p class="text-xs font-medium uppercase tracking-[0.16em] text-[#FF9A2E]">CRM / Vertrieb</p>
                     <h1 class="mt-1 text-xl font-semibold tracking-tight">Leads <span class="ml-1 text-sm font-normal text-white/45">@leads.Count</span></h1>
@@ -29,7 +29,7 @@ else
                     <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>
                 </button>
             </header>
-            <div class="border-b border-white/10 p-4">
+            <div class="shrink-0 border-b border-white/10 p-4">
                 <label class="flex items-center gap-2.5 rounded-lg border border-white/15 bg-[#0B2140] px-3 py-2.5 focus-within:border-[#FF8C1A]">
                     <svg class="size-4 shrink-0 text-white/45" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m16 16 4 4"/></svg>
                     <input @bind="searchTerm" @bind:event="oninput" placeholder="Firma oder Ansprechpartner suchen" class="w-full bg-transparent text-sm text-white outline-none placeholder:text-white/40" />
@@ -39,7 +39,7 @@ else
                     <span class="text-white/45">@FilteredLeads.Count() Ergebnisse</span>
                 </div>
             </div>
-            <nav aria-label="Gespeicherte Leads" class="divide-y divide-white/10">
+            <nav aria-label="Gespeicherte Leads" class="crm-contact-list min-h-0 flex-1 divide-y divide-white/10 overflow-y-auto">
                 @foreach (var lead in FilteredLeads)
                 {
                     var isSelected = selectedLead?.Id == lead.Id;

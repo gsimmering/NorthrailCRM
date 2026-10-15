@@ -82,6 +82,9 @@ window.northrailChat = (() => {
             firstOption.click();
             firstOption.scrollIntoView({ block: "nearest" });
         },
+        scrollToSelectedOption(element) {
+            element.querySelector('[role="option"][aria-selected="true"]')?.scrollIntoView({ block: "center" });
+        },
         detachContactNavigation(element) {
             const handler = contactNavigationHandlers.get(element);
             if (handler) {

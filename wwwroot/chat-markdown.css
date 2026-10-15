@@ -1,11 +1,32 @@
-.crm-contact-list,
 .crm-contact-card {
     scrollbar-width: none;
 }
 
-.crm-contact-list::-webkit-scrollbar,
 .crm-contact-card::-webkit-scrollbar {
     display: none;
+}
+
+.crm-contact-list {
+    scrollbar-width: thin;
+    scrollbar-color: rgb(255 255 255 / 22%) transparent;
+}
+
+.crm-contact-list::-webkit-scrollbar {
+    width: 8px;
+}
+
+.crm-contact-list::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.crm-contact-list::-webkit-scrollbar-thumb {
+    border: 2px solid transparent;
+    border-radius: 9999px;
+    background: rgb(255 255 255 / 22%) padding-box;
+}
+
+.crm-contact-list::-webkit-scrollbar-thumb:hover {
+    background: rgb(255 154 46 / 70%) padding-box;
 }
 
 .chat-message-divider {
